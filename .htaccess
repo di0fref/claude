@@ -6,7 +6,7 @@ RewriteEngine On
 RewriteBase /
 
 # Proxy API requests to Node.js backend via PHP proxy
-# (PHP proxy used because mod_proxy may not be available on shared hosting)
+# (PHP proxy used because mod_proxy is not available and PHP cURL is restricted)
 RewriteCond %{REQUEST_URI} ^/api/
 RewriteRule ^ api-proxy.php [L,QSA]
 

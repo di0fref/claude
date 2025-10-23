@@ -185,8 +185,8 @@ exports.updateSettings = async (req, res) => {
       emailSmtpPort: 'email_smtp_port',
       emailSmtpUser: 'email_smtp_user',
       emailSmtpPassword: 'email_smtp_password',
-      emailNotificationTo: 'email_notification_to',
-      emailEnabled: 'email_enabled'
+      emailNotificationTo: 'email_to',
+      emailEnabled: 'email_notifications_enabled'
     };
 
     for (const [paramName, dbKey] of Object.entries(settingsMap)) {

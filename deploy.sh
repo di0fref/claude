@@ -18,7 +18,7 @@ echo ""
 # Step 1: Build Frontend
 echo "📦 Building frontend..."
 cd "$LOCAL_PATH/frontend"
-npm run build
+REACT_APP_API_URL=/api npm run build
 echo "✅ Frontend built successfully"
 echo ""
 
