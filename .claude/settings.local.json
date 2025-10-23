@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(npx sequelize-cli db:migrate)",
+      "Bash(npx sequelize-cli:*)",
+      "Bash(sqlite3:*)",
+      "Bash(node -e:*)",
+      "Bash(xargs kill -9)",
+      "Bash(killall node:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
