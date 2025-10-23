@@ -6,7 +6,6 @@ const { scheduleWarmPredictionUpdates, scheduleOverdueBaleNotifications } = requ
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const SOCKET_PATH = process.env.SOCKET_PATH || null;
 
 // Middleware
 app.use(cors());
@@ -38,26 +37,10 @@ const startServer = async () => {
     scheduleWarmPredictionUpdates();
     scheduleOverdueBaleNotifications();
 
-    // Listen on Unix socket if specified, otherwise TCP port
-    if (SOCKET_PATH) {
-      // Remove old socket if it exists
-      const fs = require('fs');
-      if (fs.existsSync(SOCKET_PATH)) {
-        fs.unlinkSync(SOCKET_PATH);
-      }
-
-      app.listen(SOCKET_PATH, () => {
-        // Make socket accessible to Apache user
-        fs.chmodSync(SOCKET_PATH, '0666');
-        console.log(`Server is running on Unix socket: ${SOCKET_PATH}`);
-        console.log(`Environment: ${process.env.NODE_ENV}`);
-      });
-    } else {
-      app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server is running on port ${PORT}`);
-        console.log(`Environment: ${process.env.NODE_ENV}`);
-      });
-    }
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+    });
   } catch (error) {
     console.error('Unable to start server:', error);
     process.exit(1);

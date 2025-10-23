@@ -2,15 +2,9 @@
 // Simple API proxy for environments without mod_proxy
 // Forwards requests from /api/* to http://localhost:5000/api/*
 
-// Use Unix socket if available, otherwise TCP
-$socket_path = __DIR__ . '/baletracker.sock';
-if (file_exists($socket_path)) {
-    $api_base = 'http://localhost'; // Will use UNIX_SOCKET_PATH
-    $use_socket = true;
-} else {
-    $api_base = 'http://127.0.0.1:5000';
-    $use_socket = false;
-}
+// Connect to internal SSH server IP (web server and SSH are different machines)
+$api_base = 'http://10.0.1.141:30001';
+$use_socket = false;
 $request_uri = $_SERVER['REQUEST_URI'];
 
 // Extract the API path (everything after /api)
@@ -27,11 +21,6 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HEADER, false);
-
-    // Use Unix socket if available
-    if ($use_socket) {
-        curl_setopt($ch, CURLOPT_UNIX_SOCKET_PATH, $socket_path);
-    }
 
     // Forward request method
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
