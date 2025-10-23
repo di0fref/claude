@@ -13,7 +13,10 @@
       "Bash(node -e:*)",
       "Bash(xargs kill -9)",
       "Bash(killall node:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(mysql:*)",
+      "Bash(npm run seed:*)"
     ],
     "deny": [],
     "ask": []

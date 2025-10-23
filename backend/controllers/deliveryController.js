@@ -63,7 +63,7 @@ exports.createDelivery = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const { supplier, deliveryDate, invoiceNumber, numberOfBales, paymentStatus } = req.body;
+    const { supplier, deliveryDate, invoiceNumber, numberOfBales, paymentStatus, pricePerKg, totalKg } = req.body;
 
     if (!supplier || !deliveryDate || !numberOfBales) {
       await transaction.rollback();
@@ -76,7 +76,9 @@ exports.createDelivery = async (req, res) => {
       deliveryDate,
       invoiceNumber,
       numberOfBales,
-      paymentStatus: paymentStatus || false
+      paymentStatus: paymentStatus || false,
+      pricePerKg: pricePerKg || null,
+      totalKg: totalKg || null
     }, { transaction });
 
     // Create all bales for this delivery
@@ -110,7 +112,7 @@ exports.createDelivery = async (req, res) => {
 exports.updateDelivery = async (req, res) => {
   try {
     const { id } = req.params;
-    const { supplier, deliveryDate, invoiceNumber, paymentStatus } = req.body;
+    const { supplier, deliveryDate, invoiceNumber, paymentStatus, pricePerKg, totalKg } = req.body;
 
     const delivery = await Delivery.findByPk(id);
     if (!delivery) {
@@ -121,6 +123,8 @@ exports.updateDelivery = async (req, res) => {
     if (deliveryDate) delivery.deliveryDate = deliveryDate;
     if (invoiceNumber !== undefined) delivery.invoiceNumber = invoiceNumber;
     if (paymentStatus !== undefined) delivery.paymentStatus = paymentStatus;
+    if (pricePerKg !== undefined) delivery.pricePerKg = pricePerKg;
+    if (totalKg !== undefined) delivery.totalKg = totalKg;
 
     await delivery.save();
 

@@ -14,7 +14,9 @@ This guide covers deploying the Bale Tracker application to a production server 
 
 - **Frontend**: React app built to static files, served by Apache
 - **Backend**: Node.js/Express API running on port 5000, managed by PM2
-- **Database**: SQLite file-based database
+- **Database**:
+  - **Development**: SQLite file-based database
+  - **Production**: MySQL database (recommended for better performance and scalability)
 - **Scheduled Tasks**: node-cron running inside Node.js process (6 AM warm predictions, 8 AM email notifications)
 
 ---
@@ -52,7 +54,29 @@ sudo a2enmod ssl
 sudo systemctl restart apache2
 ```
 
-### 1.3 Install PM2 (Process Manager)
+### 1.3 Install MySQL
+
+```bash
+# Install MySQL server
+sudo apt install -y mysql-server
+
+# Secure MySQL installation
+sudo mysql_secure_installation
+
+# Log into MySQL
+sudo mysql
+
+# Create database and user
+CREATE DATABASE bale_delivery_tracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'baletracker'@'localhost' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON bale_delivery_tracker.* TO 'baletracker'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+**Note**: Replace `your_secure_password` with a strong password and save it for later.
+
+### 1.4 Install PM2 (Process Manager)
 
 ```bash
 sudo npm install -g pm2
@@ -119,8 +143,12 @@ NODE_ENV=production
 PORT=5000
 JWT_SECRET=your-very-secure-random-secret-key-change-this-in-production
 
-# Database (SQLite - file path)
-DB_STORAGE=./production.sqlite
+# MySQL Database Configuration
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=bale_delivery_tracker
+DB_USER=baletracker
+DB_PASSWORD=your_secure_password
 
 # CORS (your domain)
 FRONTEND_URL=https://yourdomain.com
@@ -134,55 +162,21 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ### 3.3 Initialize Production Database
 
 ```bash
-cd /var/www/bale-tracker/backend
-npm run migrate  # If you have migrations
+cd /var/www/bale-tracker
 
-# OR manually create database
-node -e "
-const { sequelize } = require('./models');
-sequelize.sync().then(() => {
-  console.log('Database created');
-  process.exit(0);
-});
-"
+# Run migrations to create tables
+npm run migrate
+
+# Seed initial data (creates default admin user and settings)
+npm run seed
 ```
 
-### 3.4 Create Initial Admin User
+**Important**: The seed will create a default admin user:
+- Username: `admin`
+- Password: `admin123`
+- **Change this password immediately after first login!**
 
-```bash
-# You'll need to create a script or use your existing auth route
-# Create backend/scripts/createAdmin.js:
-```
-
-Create file `backend/scripts/createAdmin.js`:
-```javascript
-require('dotenv').config();
-const { User } = require('../models');
-
-async function createAdmin() {
-  try {
-    const admin = await User.create({
-      username: 'admin',
-      password: 'changeme123',  // Change this!
-      role: 'admin'
-    });
-    console.log('Admin user created:', admin.username);
-    process.exit(0);
-  } catch (error) {
-    console.error('Error:', error);
-    process.exit(1);
-  }
-}
-
-createAdmin();
-```
-
-Run it:
-```bash
-node scripts/createAdmin.js
-```
-
-### 3.5 Start Backend with PM2
+### 3.4 Start Backend with PM2
 
 ```bash
 cd /var/www/bale-tracker/backend
@@ -424,6 +418,8 @@ sudo systemctl restart apache2
 
 ### 9.3 Database Backups
 
+**For MySQL:**
+
 ```bash
 # Create backup script
 sudo nano /usr/local/bin/backup-bale-tracker.sh
@@ -434,15 +430,22 @@ Add:
 #!/bin/bash
 BACKUP_DIR="/var/backups/bale-tracker"
 DATE=$(date +%Y%m%d_%H%M%S)
+DB_USER="baletracker"
+DB_PASS="your_secure_password"
+DB_NAME="bale_delivery_tracker"
 
 mkdir -p $BACKUP_DIR
-cp /var/www/bale-tracker/backend/production.sqlite \
-   $BACKUP_DIR/production_${DATE}.sqlite
+
+# Backup MySQL database
+mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > $BACKUP_DIR/backup_${DATE}.sql
+
+# Compress the backup
+gzip $BACKUP_DIR/backup_${DATE}.sql
 
 # Keep only last 30 days
-find $BACKUP_DIR -name "production_*.sqlite" -mtime +30 -delete
+find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +30 -delete
 
-echo "Backup completed: production_${DATE}.sqlite"
+echo "Backup completed: backup_${DATE}.sql.gz"
 ```
 
 Make executable and add to cron:

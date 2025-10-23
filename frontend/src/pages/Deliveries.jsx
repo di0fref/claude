@@ -141,7 +141,13 @@ const Deliveries = () => {
                 Bales (Total/Left/Bad)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kg / Price
+                Kg
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Price/kg
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Total
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Payment
@@ -170,36 +176,33 @@ const Deliveries = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {delivery.stats.total} / {delivery.stats.left} / {delivery.stats.bad}
                 </td>
-                <td className="px-2 py-4 text-[11px]" onClick={(e) => e.stopPropagation()}>
-                  <div className="space-y-0.5 w-[75px]">
-                    <div className="flex items-center">
-                      <span className="w-[50px]">
-                        <InlineEdit
-                          value={delivery.totalKg || ''}
-                          onSave={(value) => handleUpdateDelivery(delivery.id, 'totalKg', parseFloat(value))}
-                          type="number"
-                          placeholder="-"
-                        />
-                      </span>
-                      <span className="text-[9px] text-gray-400 ml-0.5">kg</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="w-[50px]">
-                        <InlineEdit
-                          value={delivery.pricePerKg || ''}
-                          onSave={(value) => handleUpdateDelivery(delivery.id, 'pricePerKg', parseFloat(value))}
-                          type="number"
-                          placeholder="-"
-                        />
-                      </span>
-                      <span className="text-[9px] text-gray-400 ml-0.5">kr</span>
-                    </div>
-                    {delivery.totalKg && delivery.pricePerKg && (
-                      <div className="font-semibold text-green-600 border-t border-gray-200 pt-0.5 text-[10px]">
-                        {(delivery.totalKg * delivery.pricePerKg).toFixed(0)}kr
-                      </div>
-                    )}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center">
+                    <InlineEdit
+                      value={delivery.totalKg || ''}
+                      onSave={(value) => handleUpdateDelivery(delivery.id, 'totalKg', parseFloat(value))}
+                      type="number"
+                      placeholder="-"
+                    />
+                    <span className="text-xs text-gray-400 ml-1">kg</span>
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center">
+                    <InlineEdit
+                      value={delivery.pricePerKg || ''}
+                      onSave={(value) => handleUpdateDelivery(delivery.id, 'pricePerKg', parseFloat(value))}
+                      type="number"
+                      placeholder="-"
+                    />
+                    <span className="text-xs text-gray-400 ml-1">kr</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                  {delivery.totalKg && delivery.pricePerKg
+                    ? `${(delivery.totalKg * delivery.pricePerKg).toFixed(0)} kr`
+                    : '-'
+                  }
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm" onClick={(e) => e.stopPropagation()}>
                   <StatusBadge

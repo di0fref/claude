@@ -4,11 +4,30 @@ const config = require('../config/config.json');
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
-const sequelize = new Sequelize({
-  dialect: dbConfig.dialect,
-  storage: dbConfig.storage,
-  logging: false
-});
+// For MySQL, read from environment variables (production) or use config (development)
+const database = process.env.DB_NAME || dbConfig.database;
+const username = process.env.DB_USER || dbConfig.username;
+const password = process.env.DB_PASSWORD || dbConfig.password;
+const host = process.env.DB_HOST || dbConfig.host || '127.0.0.1';
+const port = process.env.DB_PORT || dbConfig.port || 3306;
+
+const sequelize = new Sequelize(
+  database,
+  username,
+  password,
+  {
+    host: host,
+    port: port,
+    dialect: dbConfig.dialect,
+    logging: dbConfig.logging || false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
 
 const db = {};
 
