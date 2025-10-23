@@ -1,0 +1,24 @@
+# .htaccess for Document Root
+# This file should be placed in your Apache document root (e.g., ~/public_html or ~/fahlstad.se)
+# It proxies /api requests to your Node.js backend
+
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Proxy API requests to Node.js backend
+# Change the port (5000) if your backend runs on a different port
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ http://localhost:5000/api/$1 [P,L]
+
+# Prevent access to sensitive files
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Prevent access to .env files
+<Files ".env">
+    Require all denied
+</Files>
+
+# Prevent directory listing
+Options -Indexes

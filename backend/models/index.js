@@ -10,23 +10,34 @@ const username = process.env.DB_USER || dbConfig.username;
 const password = process.env.DB_PASSWORD || dbConfig.password;
 const host = process.env.DB_HOST || dbConfig.host || '127.0.0.1';
 const port = process.env.DB_PORT || dbConfig.port || 3306;
+const socketPath = process.env.DB_SOCKET || null;
+
+const sequelizeConfig = {
+  dialect: dbConfig.dialect,
+  logging: dbConfig.logging || false,
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+};
+
+// Use Unix socket if provided, otherwise use host/port
+if (socketPath) {
+  sequelizeConfig.dialectOptions = {
+    socketPath: socketPath
+  };
+} else {
+  sequelizeConfig.host = host;
+  sequelizeConfig.port = port;
+}
 
 const sequelize = new Sequelize(
   database,
   username,
   password,
-  {
-    host: host,
-    port: port,
-    dialect: dbConfig.dialect,
-    logging: dbConfig.logging || false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
-  }
+  sequelizeConfig
 );
 
 const db = {};

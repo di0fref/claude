@@ -4,83 +4,61 @@ This guide covers deploying the Bale Tracker application to a production server 
 
 ## Prerequisites
 
-- Linux server (Ubuntu/Debian recommended)
-- Apache 2.4+
-- Node.js 18+ and npm
-- SSL certificate (recommended for production)
+- FreeBSD or Linux server (this guide is adapted for non-root deployment)
+- Apache 2.4+ (pre-installed and configured by hosting provider)
+- Node.js 18+ and npm (check with `node --version`)
+- MySQL database (check with `mysql --version`)
 - Domain name pointed to your server
+- SSH access to your hosting account
+
+**Note:** This guide assumes you **don't have root/sudo access**. Most shared hosting environments have Apache and MySQL pre-installed.
 
 ## Architecture
 
 - **Frontend**: React app built to static files, served by Apache
-- **Backend**: Node.js/Express API running on port 5000, managed by PM2
-- **Database**:
-  - **Development**: SQLite file-based database
-  - **Production**: MySQL database (recommended for better performance and scalability)
+- **Backend**: Node.js/Express API running on port 5000, managed with nohup/screen
+- **Database**: MySQL database (both development and production)
 - **Scheduled Tasks**: node-cron running inside Node.js process (6 AM warm predictions, 8 AM email notifications)
 
 ---
 
-## Step 1: Prepare Your Server
+## Step 1: Verify Server Environment
 
-### 1.1 Install Node.js
+Since you're on a shared hosting environment without root access, verify what's already installed:
 
 ```bash
-# Update system
-sudo apt update
-sudo apt upgrade -y
-
-# Install Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Verify installation
+# Check Node.js
 node --version
 npm --version
+
+# Check MySQL
+mysql --version
+
+# Check available commands
+which nohup screen tmux
 ```
 
-### 1.2 Install Apache
+**If Node.js is not installed or version is too old**, contact your hosting provider or check if tools like `nvm` (Node Version Manager) are available for user-level installation.
+
+### 1.1 Create MySQL Database
+
+Use your hosting provider's control panel (cPanel, Plesk, etc.) or command line:
 
 ```bash
-sudo apt install -y apache2
+# Log into MySQL (password may be required)
+mysql -u your_username -p
 
-# Enable required modules
-sudo a2enmod proxy
-sudo a2enmod proxy_http
-sudo a2enmod rewrite
-sudo a2enmod ssl
-
-# Restart Apache
-sudo systemctl restart apache2
-```
-
-### 1.3 Install MySQL
-
-```bash
-# Install MySQL server
-sudo apt install -y mysql-server
-
-# Secure MySQL installation
-sudo mysql_secure_installation
-
-# Log into MySQL
-sudo mysql
-
-# Create database and user
+# Create database
 CREATE DATABASE bale_delivery_tracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'baletracker'@'localhost' IDENTIFIED BY 'your_secure_password';
-GRANT ALL PRIVILEGES ON bale_delivery_tracker.* TO 'baletracker'@'localhost';
-FLUSH PRIVILEGES;
+
+# Show databases to confirm
+SHOW DATABASES;
+
+# Exit
 EXIT;
 ```
 
-**Note**: Replace `your_secure_password` with a strong password and save it for later.
-
-### 1.4 Install PM2 (Process Manager)
-
-```bash
-sudo npm install -g pm2
-```
+**Note:** Save your MySQL username and password for the `.env` configuration later.
 
 ---
 
@@ -176,21 +154,128 @@ npm run seed
 - Password: `admin123`
 - **Change this password immediately after first login!**
 
-### 3.4 Start Backend with PM2
+### 3.4 Start Backend (Without Root Access)
 
+Since you don't have root access, use one of these methods:
+
+#### Option A: Using nohup (Recommended)
+
+Create logs directory:
 ```bash
-cd /var/www/bale-tracker/backend
-pm2 start server.js --name bale-tracker-api
-pm2 save
-pm2 startup  # Follow the instructions it provides
+mkdir -p /var/www/bale-tracker/logs
 ```
 
-Verify it's running:
+Create `start.sh`:
 ```bash
-pm2 status
-pm2 logs bale-tracker-api
+cat > /var/www/bale-tracker/start.sh << 'EOF'
+#!/bin/sh
+cd /var/www/bale-tracker
+nohup node backend/server.js > logs/output.log 2>&1 &
+echo $! > /tmp/baletracker.pid
+echo "Server started with PID $(cat /tmp/baletracker.pid)"
+echo "Check logs with: tail -f logs/output.log"
+EOF
+
+chmod +x /var/www/bale-tracker/start.sh
+```
+
+Create `stop.sh`:
+```bash
+cat > /var/www/bale-tracker/stop.sh << 'EOF'
+#!/bin/sh
+if [ -f /tmp/baletracker.pid ]; then
+    PID=$(cat /tmp/baletracker.pid)
+    kill $PID
+    rm /tmp/baletracker.pid
+    echo "Server stopped (PID: $PID)"
+else
+    echo "PID file not found. Finding process manually..."
+    pkill -f "node backend/server.js"
+    echo "Killed all matching processes"
+fi
+EOF
+
+chmod +x /var/www/bale-tracker/stop.sh
+```
+
+Create `status.sh`:
+```bash
+cat > /var/www/bale-tracker/status.sh << 'EOF'
+#!/bin/sh
+if [ -f /tmp/baletracker.pid ]; then
+    PID=$(cat /tmp/baletracker.pid)
+    if ps -p $PID > /dev/null 2>&1; then
+        echo "Server is running (PID: $PID)"
+        echo "Logs: tail -f /var/www/bale-tracker/logs/output.log"
+    else
+        echo "Server is not running (stale PID file)"
+        rm /tmp/baletracker.pid
+    fi
+else
+    echo "Server is not running (no PID file)"
+fi
+EOF
+
+chmod +x /var/www/bale-tracker/status.sh
+```
+
+**Usage:**
+```bash
+# Start server
+./start.sh
+
+# Stop server
+./stop.sh
+
+# Check status
+./status.sh
+
+# View logs
+tail -f logs/output.log
+
+# Test API
 curl http://localhost:5000/api/health
 ```
+
+#### Option B: Using screen (Interactive)
+
+If `screen` is available:
+
+```bash
+# Start server in screen session
+screen -S baletracker
+cd /var/www/bale-tracker
+node backend/server.js
+
+# Detach: Press Ctrl+A then D
+
+# Reattach later
+screen -r baletracker
+
+# List sessions
+screen -ls
+```
+
+#### Option C: Using tmux (Alternative to screen)
+
+If `tmux` is available:
+
+```bash
+# Start server in tmux session
+tmux new -s baletracker
+cd /var/www/bale-tracker
+node backend/server.js
+
+# Detach: Press Ctrl+B then D
+
+# Reattach later
+tmux attach -t baletracker
+
+# List sessions
+tmux ls
+```
+
+**Note:** With nohup, the process continues running even after you disconnect from SSH.
 
 ---
 
@@ -220,122 +305,187 @@ npm run build
 
 This creates `frontend/dist/` with production-ready static files.
 
-### 4.3 Copy Build to Apache Directory
+### 4.3 Deploy Frontend Files
+
+Copy the built files to your public HTML directory (path may vary by hosting provider):
 
 ```bash
-sudo mkdir -p /var/www/html/bale-tracker
-sudo cp -r /var/www/bale-tracker/frontend/dist/* /var/www/html/bale-tracker/
-sudo chown -R www-data:www-data /var/www/html/bale-tracker
+# Common paths: ~/public_html, ~/www, ~/htdocs, ~/yourdomain.com
+# Replace with your actual path
+cp -r /var/www/bale-tracker/frontend/build/* ~/public_html/
+
+# Or if deploying to a subdirectory:
+# mkdir -p ~/public_html/app
+# cp -r /var/www/bale-tracker/frontend/build/* ~/public_html/app/
 ```
+
+### 4.4 Copy .htaccess File
+
+Copy the `.htaccess` file to enable React Router support:
+
+```bash
+cp /var/www/bale-tracker/frontend/.htaccess ~/public_html/.htaccess
+```
+
+**Note:** The `.htaccess` file is already created in `frontend/.htaccess` and includes:
+- React Router support (redirects all requests to index.html)
+- Security headers
+- Gzip compression
+- Browser caching for static assets
 
 ---
 
-## Step 5: Configure Apache
+## Step 5: Configure Apache with .htaccess
 
-### 5.1 Create Virtual Host Configuration
+Since you don't have root access, you'll configure Apache using `.htaccess` files.
+
+### 5.1 Create Root .htaccess for API Proxy
+
+In your document root (e.g., `~/public_html` or `~/yourdomain.com`), create or edit `.htaccess`:
 
 ```bash
-sudo nano /etc/apache2/sites-available/bale-tracker.conf
+nano ~/public_html/.htaccess
 ```
 
 Add this configuration:
 
 ```apache
-<VirtualHost *:80>
-    ServerName yourdomain.com
-    ServerAlias www.yourdomain.com
+# Enable Rewrite Engine
+RewriteEngine On
 
-    DocumentRoot /var/www/html/bale-tracker
+# Proxy API requests to Node.js backend running on port 5000
+# Make sure mod_proxy is enabled (ask your hosting provider if unsure)
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ http://localhost:5000/api/$1 [P,L]
 
-    # Proxy API requests to Node.js backend
-    ProxyPreserveHost On
-    ProxyPass /api http://localhost:5000/api
-    ProxyPassReverse /api http://localhost:5000/api
+# Prevent access to sensitive files
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
 
-    <Directory /var/www/html/bale-tracker>
-        Options -Indexes +FollowSymLinks
-        AllowOverride All
-        Require all granted
+# Prevent access to .env files
+<Files ".env">
+    Require all denied
+</Files>
 
-        # React Router support - redirect all requests to index.html
-        RewriteEngine On
-        RewriteBase /
-        RewriteRule ^index\.html$ - [L]
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-l
-        RewriteRule . /index.html [L]
-    </Directory>
-
-    # Logging
-    ErrorLog ${APACHE_LOG_DIR}/bale-tracker-error.log
-    CustomLog ${APACHE_LOG_DIR}/bale-tracker-access.log combined
-</VirtualHost>
+# Prevent directory listing
+Options -Indexes
 ```
 
-### 5.2 Enable Site and Restart Apache
+### 5.2 Verify .htaccess is Working
+
+Test that .htaccess is being read:
 
 ```bash
-# Disable default site
-sudo a2dissite 000-default.conf
+# This should return 403 Forbidden
+curl http://yourdomain.com/.env
 
-# Enable bale-tracker site
-sudo a2ensite bale-tracker.conf
+# This should proxy to your backend
+curl http://localhost:5000/api/health
+curl http://yourdomain.com/api/health
+```
 
-# Test configuration
-sudo apache2ctl configtest
+**Important:** If the proxy doesn't work, contact your hosting provider to ensure:
+- `mod_rewrite` is enabled
+- `mod_proxy` and `mod_proxy_http` are enabled
+- `.htaccess` files are allowed (`AllowOverride All`)
 
-# Restart Apache
-sudo systemctl restart apache2
+### 5.3 Alternative: Manual Proxy Setup
+
+If proxy modules aren't available, you can use a simple PHP proxy script:
+
+Create `api-proxy.php` in your public directory:
+
+```php
+<?php
+// Simple API proxy for environments without mod_proxy
+$api_base = 'http://localhost:5000/api';
+$request_uri = $_SERVER['REQUEST_URI'];
+
+// Extract the API path
+if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
+    $api_path = $matches[1];
+    $url = $api_base . '/' . $api_path;
+
+    // Forward the request
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, false);
+
+    // Forward request method and body
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
+    if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'PATCH'])) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, file_get_contents('php://input'));
+    }
+
+    // Forward headers
+    $headers = [];
+    foreach (getallheaders() as $key => $value) {
+        if (strtolower($key) !== 'host') {
+            $headers[] = "$key: $value";
+        }
+    }
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    // Execute and return
+    $response = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo $response;
+} else {
+    http_response_code(404);
+    echo json_encode(['error' => 'Not found']);
+}
+?>
+```
+
+Then update frontend `.htaccess`:
+```apache
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ /api-proxy.php [L]
 ```
 
 ---
 
 ## Step 6: Setup SSL (HTTPS) - Recommended
 
-### 6.1 Install Certbot
+Since you don't have root access, SSL setup depends on your hosting provider:
 
-```bash
-sudo apt install -y certbot python3-certbot-apache
+### Option 1: Use Hosting Provider's Control Panel
+
+Most hosting providers (cPanel, Plesk, etc.) offer free Let's Encrypt SSL certificates:
+
+1. Log into your hosting control panel
+2. Find "SSL/TLS" or "Let's Encrypt" section
+3. Enable SSL for your domain
+4. Force HTTPS redirect (usually a checkbox option)
+
+### Option 2: Force HTTPS via .htaccess
+
+If SSL is enabled, add this to the **top** of your root `.htaccess`:
+
+```apache
+# Force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 ```
 
-### 6.2 Obtain SSL Certificate
+### Option 3: Contact Your Hosting Provider
 
-```bash
-sudo certbot --apache -d yourdomain.com -d www.yourdomain.com
-```
-
-Follow the prompts. Certbot will:
-- Obtain certificate from Let's Encrypt
-- Automatically configure Apache for HTTPS
+Ask them to:
+- Enable Let's Encrypt SSL for your domain
 - Set up automatic renewal
-
-### 6.3 Verify Auto-Renewal
-
-```bash
-sudo certbot renew --dry-run
-```
+- Configure HTTPS redirect
 
 ---
 
-## Step 7: Configure Firewall
+## Step 7: Post-Deployment Tasks
 
-```bash
-# Allow HTTP and HTTPS
-sudo ufw allow 'Apache Full'
-
-# Enable firewall if not already enabled
-sudo ufw enable
-
-# Check status
-sudo ufw status
-```
-
----
-
-## Step 8: Post-Deployment Tasks
-
-### 8.1 Verify Application is Running
+### 7.1 Verify Application is Running
 
 1. Visit `https://yourdomain.com`
 2. Log in with admin credentials
@@ -345,7 +495,7 @@ sudo ufw status
    - Manage bales
    - Update settings (SMHI location, email config)
 
-### 8.2 Configure Settings in UI
+### 7.2 Configure Settings in UI
 
 1. Go to Settings page (admin only)
 2. Set SMHI location (latitude/longitude)
@@ -355,11 +505,11 @@ sudo ufw status
    - Enable notifications
 4. Set warning thresholds (winter/summer days)
 
-### 8.3 Verify Scheduled Tasks
+### 7.3 Verify Scheduled Tasks
 
-Check PM2 logs to confirm cron jobs are initialized:
+Check application logs to confirm cron jobs are initialized:
 ```bash
-pm2 logs bale-tracker-api
+tail -f /var/www/bale-tracker/logs/output.log
 ```
 
 You should see:
@@ -368,7 +518,7 @@ Warm prediction scheduler initialized (runs daily at 6 AM)
 Overdue bale notification scheduler initialized (runs daily at 8 AM)
 ```
 
-### 8.4 Test Email Notifications (Optional)
+### 7.4 Test Email Notifications (Optional)
 
 Manually trigger the email check:
 ```bash
@@ -384,25 +534,31 @@ emailService.checkAndNotifyOverdueBales().then(() => {
 
 ---
 
-## Step 9: Monitoring and Maintenance
+## Step 8: Monitoring and Maintenance
 
-### 9.1 Monitor Backend Process
+### 8.1 Monitor Backend Process
 
 ```bash
-# View status
-pm2 status
+# Check status
+./status.sh
 
-# View logs
-pm2 logs bale-tracker-api
+# View logs (live)
+tail -f logs/output.log
 
-# Restart if needed
-pm2 restart bale-tracker-api
+# View recent logs
+tail -100 logs/output.log
 
-# Stop
-pm2 stop bale-tracker-api
+# Check if process is running
+ps aux | grep "node backend/server.js"
+
+# Restart server
+./stop.sh && ./start.sh
+
+# Stop server
+./stop.sh
 ```
 
-### 9.2 Monitor Apache
+### 8.2 Monitor Apache
 
 ```bash
 # Check status
@@ -416,7 +572,7 @@ sudo tail -f /var/log/apache2/bale-tracker-access.log
 sudo systemctl restart apache2
 ```
 
-### 9.3 Database Backups
+### 8.3 Database Backups
 
 **For MySQL:**
 
@@ -460,9 +616,9 @@ sudo crontab -e
 
 ---
 
-## Step 10: Updating the Application
+## Step 9: Updating the Application
 
-### 10.1 Update Backend
+### 9.1 Update Backend
 
 ```bash
 cd /var/www/bale-tracker
@@ -470,18 +626,20 @@ cd /var/www/bale-tracker
 # Pull latest code (if using git)
 git pull
 
-# Update backend dependencies
-cd backend
+# Update dependencies
 npm install --production
 
-# Restart backend
-pm2 restart bale-tracker-api
+# Stop the server
+./stop.sh
+
+# Start the server
+./start.sh
 
 # Check logs
-pm2 logs bale-tracker-api
+tail -f logs/output.log
 ```
 
-### 10.2 Update Frontend
+### 9.2 Update Frontend
 
 ```bash
 cd /var/www/bale-tracker/frontend
@@ -506,16 +664,22 @@ sudo chown -R www-data:www-data /var/www/html/bale-tracker
 ### Backend won't start
 ```bash
 # Check logs
-pm2 logs bale-tracker-api
+tail -100 /var/www/bale-tracker/logs/output.log
 
 # Check if port 5000 is in use
-sudo lsof -i :5000
+lsof -i :5000
+# or
+sockstat -l | grep 5000
 
 # Verify .env file exists
-cat /var/www/bale-tracker/backend/.env
+cat /var/www/bale-tracker/.env
 
-# Check database permissions
-ls -la /var/www/bale-tracker/backend/*.sqlite
+# Check if process is running
+ps aux | grep "node backend/server.js"
+
+# Try starting manually to see errors
+cd /var/www/bale-tracker
+node backend/server.js
 ```
 
 ### Apache shows errors
@@ -539,16 +703,16 @@ FRONTEND_URL=https://yourdomain.com
 
 Restart backend after changes:
 ```bash
-pm2 restart bale-tracker-api
+./stop.sh && ./start.sh
 ```
 
 ### Scheduled tasks not running
 ```bash
 # Check if backend is running
-pm2 status
+./status.sh
 
 # Check logs for cron initialization messages
-pm2 logs bale-tracker-api | grep scheduler
+grep scheduler /var/www/bale-tracker/logs/output.log
 
 # Verify time zone is correct
 date
@@ -568,12 +732,11 @@ timedatectl
 - [ ] Changed default admin password
 - [ ] JWT_SECRET is a secure random string
 - [ ] SSL/HTTPS is enabled
-- [ ] Firewall is configured (only ports 80, 443 open)
-- [ ] Database file has proper permissions (not world-readable)
-- [ ] .env file is not publicly accessible
+- [ ] MySQL database credentials are secure
+- [ ] .env file is not publicly accessible (check permissions: `chmod 600 .env`)
 - [ ] Regular backups are scheduled
 - [ ] Apache security headers configured (optional but recommended)
-- [ ] PM2 is set to auto-start on server reboot
+- [ ] Server restart script is ready (consider cron @reboot if supported)
 
 ---
 
