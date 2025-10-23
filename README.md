@@ -29,7 +29,7 @@ A full-stack web application for tracking hay bale deliveries and their lifecycl
 - Node.js & Express.js
 - Sequelize ORM
 - SQLite database
-- bcrypt for password hashing
+- bcryptjs for password hashing
 - JWT for authentication
 - Auto-migrations with Sequelize
 
@@ -269,7 +269,7 @@ claude/
 - Migrations are run automatically on `npm run migrate`
 - Server uses nodemon for auto-restart during development
 - Frontend proxies API requests to backend during development
-- All passwords are hashed using bcrypt with salt rounds of 10
+- All passwords are hashed using bcryptjs with salt rounds of 10
 - JWT tokens expire after 24 hours
 
 ## Production Deployment
