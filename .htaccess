@@ -1,0 +1,83 @@
+# Claude Bale Tracker - Root .htaccess
+# Place this file at: /home/s6411/fahlstad.se/claude/.htaccess
+
+# Enable Rewrite Engine
+RewriteEngine On
+RewriteBase /
+
+# Proxy API requests to Node.js backend via PHP proxy
+# (PHP proxy used because mod_proxy may not be available on shared hosting)
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^ api-proxy.php [L,QSA]
+
+# Serve static files directly if they exist in frontend/build
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !\.php$
+RewriteCond %{DOCUMENT_ROOT}/frontend/build%{REQUEST_URI} -f
+RewriteRule ^(.*)$ frontend/build/$1 [L]
+
+# Serve directories directly if they exist in frontend/build
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !\.php$
+RewriteCond %{DOCUMENT_ROOT}/frontend/build%{REQUEST_URI} -d
+RewriteRule ^(.*)$ frontend/build/$1 [L]
+
+# All other requests go to index.html (React Router support)
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !\.php$
+RewriteRule ^(.*)$ frontend/build/index.html [L]
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Ensure proper MIME types for static files
+<IfModule mod_mime.c>
+    AddType application/javascript .js .mjs
+    AddType text/css .css
+    AddType image/svg+xml .svg
+    AddType application/json .json
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+</IfModule>
+
+# Enable Gzip Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Browser Caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# Prevent access to sensitive files
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<Files ".env">
+    Require all denied
+</Files>
+
+<Files "package.json">
+    Require all denied
+</Files>
+
+# Prevent directory listing
+Options -Indexes

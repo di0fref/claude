@@ -8,7 +8,9 @@
     "client": "cd frontend && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "migrate": "cd backend && npx sequelize-cli db:migrate",
-    "seed": "cd backend && npx sequelize-cli db:seed:all"
+    "migrate:prod": "cd backend && NODE_ENV=production npx sequelize-cli db:migrate",
+    "seed": "cd backend && npx sequelize-cli db:seed:all",
+    "seed:prod": "cd backend && NODE_ENV=production npx sequelize-cli db:seed:all"
   },
   "keywords": [],
   "author": "",

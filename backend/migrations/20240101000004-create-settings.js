@@ -1,4 +1,4 @@
-'use strict';
+longitide and la'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
