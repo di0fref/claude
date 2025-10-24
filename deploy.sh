@@ -15,6 +15,32 @@ echo "  Claude Bale Tracker - Deployment"
 echo "=========================================="
 echo ""
 
+# Step 0: Git Commit and Push
+echo "📝 Committing changes to git..."
+cd "$LOCAL_PATH"
+
+# Check if there are any changes to commit
+if [[ -n $(git status -s) ]]; then
+    # Add all changes
+    git add .
+
+    # Create commit with timestamp
+    TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+    git commit -m "Deploy: $TIMESTAMP
+
+🤖 Generated with Claude Code
+https://claude.com/claude-code
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+    # Push to remote
+    git push
+    echo "✅ Changes committed and pushed to git"
+else
+    echo "ℹ️  No changes to commit"
+fi
+echo ""
+
 # Step 1: Build Frontend
 echo "📦 Building frontend..."
 cd "$LOCAL_PATH/frontend"
