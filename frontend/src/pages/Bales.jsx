@@ -73,9 +73,8 @@ const Bales = () => {
       } else if (field === 'isClosed' && newValue && bale.isOpen) {
         // When closing an open bale, clear open status and set closed
         await balesAPI.updateStatus(bale.id, { isOpen: false, isClosed: true });
-        // Clear opened date and set closed date to today
+        // Set closed date to today (keep opened date for tracking)
         await balesAPI.updateDates(bale.id, {
-          openedDate: null,
           closedDate: new Date().toISOString().split('T')[0]
         });
       } else {

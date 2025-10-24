@@ -28,12 +28,12 @@
 	26. I want to see a cost prediction for the next 6 months, a button and a popup
 	27. I want to use react and tailwindcss
 	28. Fully responsive, table should be cards on small devices
-	29. Tables on large devices carrs on small devices
+	29. Tables on large devices cards on small devices
 	30. Use sequalize.js
-	31. Intergrate to smhi to get predictions when a bale is going to be warm based on previous data and temparature
+	31. Integrate to smhi to get predictions when a bale is going to be warm based on previous data and temparature
 	32. When setting a bale warm record the temperature and date
 	33. Make the smhi location configurable in the the ui
-	34. Make warm prediction run periodicly to update the warm prediction
+	34. Make warm prediction run periodically to update the warm prediction
 	35. I want an email to be sent to all users when a bale has been open for too long, eg. winter, 6 days, summer 4 days, should be confugurable in ui in the us
 	36. I need amil address on users
 	37. Forgot password functionality
