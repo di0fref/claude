@@ -2,7 +2,24 @@
   "permissions": {
     "allow": [
       "Bash(ssh:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:hay.fahlstad.se)",
+      "Bash(./deploy.sh:*)",
+      "Bash(npm install)",
+      "Bash(REACT_APP_API_URL=/api npm run build:*)",
+      "Bash(node -e:*)",
+      "Bash(chmod:*)",
+      "Bash(node test-email-notification.js:*)",
+      "Bash(npm run build:*)",
+      "Bash(node:*)",
+      "Bash(npx sequelize-cli:*)",
+      "Bash(npm run stop:*)",
+      "Bash(npm run start)",
+      "Bash(pkill:*)",
+      "Bash(rsync:*)",
+      "Bash(jobs:*)",
+      "Bash(/dev/null)"
     ],
     "deny": [],
     "ask": []

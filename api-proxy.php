@@ -2,6 +2,16 @@
 // Simple API proxy for environments without mod_proxy
 // Forwards requests from /api/* to http://localhost:5000/api/*
 
+// Log that we're being executed
+$log_file = __DIR__ . '/logs/api-proxy.log';
+@file_put_contents($log_file, date('Y-m-d H:i:s') . " - API proxy script executed - Method: " . $_SERVER['REQUEST_METHOD'] . " URI: " . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
+
+// Handle CORS preflight OPTIONS requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 // Connect to internal SSH server IP (web server and SSH are different machines)
 $api_base = 'http://10.0.1.141:30001';
 $use_socket = false;
@@ -36,10 +46,17 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
     // Forward headers (excluding host)
     $headers = [];
 
+    // Check for Authorization header in Apache-specific location
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $headers[] = "Authorization: " . $_SERVER['HTTP_AUTHORIZATION'];
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $headers[] = "Authorization: " . $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+
     // getallheaders() may not be available, use $_SERVER as fallback
     if (function_exists('getallheaders')) {
         foreach (getallheaders() as $key => $value) {
-            if (strtolower($key) !== 'host' && strtolower($key) !== 'connection') {
+            if (strtolower($key) !== 'host' && strtolower($key) !== 'connection' && strtolower($key) !== 'authorization') {
                 $headers[] = "$key: $value";
             }
         }
@@ -47,7 +64,8 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
         // Fallback: extract headers from $_SERVER
         foreach ($_SERVER as $key => $value) {
             if (substr($key, 0, 5) === 'HTTP_') {
-                $header = str_replace('_', '-', substr($key, 5));
+                // Convert HTTP_AUTHORIZATION to Authorization, HTTP_CONTENT_TYPE to Content-Type, etc.
+                $header = str_replace(' ', '-', ucwords(str_replace('_', ' ', strtolower(substr($key, 5)))));
                 if (strtolower($header) !== 'host' && strtolower($header) !== 'connection') {
                     $headers[] = "$header: $value";
                 }
@@ -56,6 +74,10 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
         // Add Content-Type if present
         if (isset($_SERVER['CONTENT_TYPE'])) {
             $headers[] = "Content-Type: " . $_SERVER['CONTENT_TYPE'];
+        }
+        // Add Authorization if present (sometimes not in HTTP_ prefix)
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $headers[] = "Authorization: " . $_SERVER['HTTP_AUTHORIZATION'];
         }
     }
 
@@ -77,14 +99,28 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
         exit;
     }
 
-    // Set response status and headers
+    // Debug logging - write to file since error_log might not be accessible
+    $log_file = __DIR__ . '/logs/api-proxy.log';
+    $log_msg = date('Y-m-d H:i:s') . " - Status=$status, Content-Type=$content_type, Response length=" . strlen($response) . ", Response: " . substr($response, 0, 200) . "\n";
+    @file_put_contents($log_file, $log_msg, FILE_APPEND);
+
+    error_log("API Proxy: Status=$status, Content-Type=$content_type, Response length=" . strlen($response));
+
+    // Set response status and headers - Content-Length MUST come before status code
+    header('Content-Length: ' . strlen($response));
     http_response_code($status);
     if ($content_type) {
         header('Content-Type: ' . $content_type);
     }
 
+    // Disable caching for API responses
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
     // Output response
     echo $response;
+    exit;
 } else {
     http_response_code(404);
     header('Content-Type: application/json');

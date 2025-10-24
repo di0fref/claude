@@ -60,28 +60,43 @@ const Bales = () => {
   const handleStatusToggle = async (bale, field) => {
     const newValue = !bale[field];
 
-    // Validation: cannot be open and closed at the same time
-    if (field === 'isOpen' && newValue && bale.isClosed) {
-      alert('Cannot mark as open while closed. Please unmark closed first.');
-      return;
-    }
-    if (field === 'isClosed' && newValue && bale.isOpen) {
-      alert('Cannot mark as closed while open. Please unmark open first.');
-      return;
-    }
-
     try {
-      // Update status
-      await balesAPI.updateStatus(bale.id, { [field]: newValue });
+      // Open and closed status should toggle each other
+      if (field === 'isOpen' && newValue && bale.isClosed) {
+        // When opening a closed bale, clear closed status and set open
+        await balesAPI.updateStatus(bale.id, { isOpen: true, isClosed: false });
+        // Clear closed date and set opened date to today
+        await balesAPI.updateDates(bale.id, {
+          closedDate: null,
+          openedDate: new Date().toISOString().split('T')[0]
+        });
+      } else if (field === 'isClosed' && newValue && bale.isOpen) {
+        // When closing an open bale, clear open status and set closed
+        await balesAPI.updateStatus(bale.id, { isOpen: false, isClosed: true });
+        // Clear opened date and set closed date to today
+        await balesAPI.updateDates(bale.id, {
+          openedDate: null,
+          closedDate: new Date().toISOString().split('T')[0]
+        });
+      } else {
+        // Normal toggle without conflict
+        await balesAPI.updateStatus(bale.id, { [field]: newValue });
 
-      // Clear corresponding date when unchecking (setting to false)
-      if (!newValue) {
-        if (field === 'isOpen' && bale.openedDate) {
-          // Clear opened date when marking as not open
-          await balesAPI.updateDates(bale.id, { openedDate: null });
-        } else if (field === 'isClosed' && bale.closedDate) {
-          // Clear closed date when marking as not closed
-          await balesAPI.updateDates(bale.id, { closedDate: null });
+        // Set or clear corresponding date
+        if (newValue) {
+          // Setting to true - set date to today
+          if (field === 'isOpen') {
+            await balesAPI.updateDates(bale.id, { openedDate: new Date().toISOString().split('T')[0] });
+          } else if (field === 'isClosed') {
+            await balesAPI.updateDates(bale.id, { closedDate: new Date().toISOString().split('T')[0] });
+          }
+        } else {
+          // Setting to false - clear date
+          if (field === 'isOpen' && bale.openedDate) {
+            await balesAPI.updateDates(bale.id, { openedDate: null });
+          } else if (field === 'isClosed' && bale.closedDate) {
+            await balesAPI.updateDates(bale.id, { closedDate: null });
+          }
         }
       }
 

@@ -15,7 +15,7 @@ async function createTransporter() {
     return null;
   }
 
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: settingsObj.email_smtp_host,
     port: parseInt(settingsObj.email_smtp_port || 587),
     secure: false, // true for 465, false for other ports
@@ -39,12 +39,12 @@ async function checkAndNotifyOverdueBales() {
     });
 
     // Check if email notifications are enabled
-    if (settingsObj.email_enabled !== 'true') {
+    if (settingsObj.email_notifications_enabled !== 'true') {
       console.log('Email notifications are disabled');
       return;
     }
 
-    if (!settingsObj.email_notification_to) {
+    if (!settingsObj.email_to) {
       console.log('No notification email configured');
       return;
     }
@@ -113,18 +113,57 @@ async function checkAndNotifyOverdueBales() {
     // Send email
     await transporter.sendMail({
       from: settingsObj.email_smtp_user,
-      to: settingsObj.email_notification_to,
+      to: settingsObj.email_to,
       subject: `⚠️ Alert: ${overdueBales.length} Overdue Bale(s)`,
       text: emailBody
     });
 
-    console.log(`Email notification sent for ${overdueBales.length} overdue bales to ${settingsObj.email_notification_to}`);
+    console.log(`Email notification sent for ${overdueBales.length} overdue bales to ${settingsObj.email_to}`);
 
   } catch (error) {
     console.error('Error in email notification service:', error);
   }
 }
 
+/**
+ * Send password reset email
+ */
+async function sendPasswordResetEmail(username, resetUrl) {
+  try {
+    // Get settings
+    const settings = await Setting.findAll();
+    const settingsObj = {};
+    settings.forEach(setting => {
+      settingsObj[setting.key] = setting.value;
+    });
+
+    // Create transporter
+    const transporter = await createTransporter();
+    if (!transporter) {
+      console.log('Email transporter not configured');
+      throw new Error('Email service not configured');
+    }
+
+    // Build email content
+    const emailBody = `Hello ${username},\n\nYou requested to reset your password.\n\nPlease click the link below to reset your password:\n\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you did not request a password reset, please ignore this email.\n\nThis is an automated message from the Bale Tracking System.`;
+
+    // Send email
+    await transporter.sendMail({
+      from: settingsObj.email_smtp_user,
+      to: settingsObj.email_to,
+      subject: 'Password Reset Request',
+      text: emailBody
+    });
+
+    console.log(`Password reset email sent to ${settingsObj.email_to}`);
+
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+}
+
 module.exports = {
-  checkAndNotifyOverdueBales
+  checkAndNotifyOverdueBales,
+  sendPasswordResetEmail
 };

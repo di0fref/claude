@@ -1,9 +1,18 @@
 {
   "development": {
     "username": "root",
-    "password": "root",
+    "password": "",
     "database": "claude",
     "host": "127.0.0.1",
+    "port": 3306,
+    "dialect": "mysql",
+    "logging": false
+  },
+  "production": {
+    "username": "s6411",
+    "password": "Tfqnm",
+    "database": "s6411_claude",
+    "host": "sql.i8t.com",
     "port": 3306,
     "dialect": "mysql",
     "logging": false

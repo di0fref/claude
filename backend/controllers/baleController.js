@@ -193,7 +193,7 @@ exports.updateSettings = async (req, res) => {
       const value = req.body[paramName];
       if (value !== undefined) {
         await Setting.update(
-          { value: value.toString() },
+          { value: value === null || value === '' ? '' : value.toString() },
           { where: { key: dbKey } }
         );
       }

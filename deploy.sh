@@ -7,8 +7,8 @@ set -e  # Exit on any error
 
 # Configuration
 SERVER="s6411@ssh.i8t.com"
-REMOTE_PATH="/home/s6411/fahlstad.se/claude"
-LOCAL_PATH="/Users/fref/www/claude"
+REMOTE_PATH="/home/s6411/fahlstad.se/hay"
+LOCAL_PATH="/Users/fredrik/www/claude"
 
 echo "=========================================="
 echo "  Claude Bale Tracker - Deployment"
@@ -37,15 +37,21 @@ echo ""
 # Step 3: Upload Frontend Build
 echo "📤 Uploading frontend build..."
 rsync -avz --delete \
+  --exclude 'backend' \
+  --exclude 'logs' \
+  --exclude '.env' \
+  --exclude '.htaccess' \
+  --exclude 'api-proxy.php' \
   "$LOCAL_PATH/frontend/build/" \
-  "$SERVER:$REMOTE_PATH/frontend/build/"
+  "$SERVER:$REMOTE_PATH/"
 echo "✅ Frontend uploaded"
 echo ""
 
-# Step 4: Upload .htaccess
-echo "📤 Uploading .htaccess..."
+# Step 4: Upload .htaccess and API proxy
+echo "📤 Uploading .htaccess and API proxy..."
 scp "$LOCAL_PATH/.htaccess" "$SERVER:$REMOTE_PATH/"
-echo "✅ .htaccess uploaded"
+scp "$LOCAL_PATH/api-proxy.php" "$SERVER:$REMOTE_PATH/"
+echo "✅ .htaccess and API proxy uploaded"
 echo ""
 
 # Step 5: Upload Scripts
@@ -69,7 +75,7 @@ echo ""
 # Step 8: Restart Server
 echo "🔄 Restarting application..."
 ssh "$SERVER" << 'EOF'
-cd /home/s6411/fahlstad.se/claude
+cd /home/s6411/fahlstad.se/hay
 
 # Stop existing server
 if [ -f /tmp/baletracker.pid ]; then
@@ -93,5 +99,5 @@ echo "✅ Deployment complete!"
 echo ""
 echo "View logs: ssh $SERVER 'tail -f $REMOTE_PATH/logs/output.log'"
 echo "Check status: ssh $SERVER 'cd $REMOTE_PATH && ./status.sh'"
-echo "Visit: https://claude.fahlstad.se"
+echo "Visit: https://hay.fahlstad.se"
 echo ""

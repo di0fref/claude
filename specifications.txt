@@ -38,5 +38,7 @@
 	36. I need amil address on users
 	37. Forgot password functionality
 	38. I need the smtp server to be configurable in settings
+	39. When clicking open set open date, when clicking closed clear open status and set closed date
+	40. Open and closed status should toggle each other
 
 so
