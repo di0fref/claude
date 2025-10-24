@@ -13,6 +13,8 @@ const Bales = () => {
   const [settings, setSettings] = useState({ winter_warning_days: 7, summer_warning_days: 5 });
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [sortField, setSortField] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     fetchData();
@@ -69,7 +71,20 @@ const Bales = () => {
     }
 
     try {
+      // Update status
       await balesAPI.updateStatus(bale.id, { [field]: newValue });
+
+      // Clear corresponding date when unchecking (setting to false)
+      if (!newValue) {
+        if (field === 'isOpen' && bale.openedDate) {
+          // Clear opened date when marking as not open
+          await balesAPI.updateDates(bale.id, { openedDate: null });
+        } else if (field === 'isClosed' && bale.closedDate) {
+          // Clear closed date when marking as not closed
+          await balesAPI.updateDates(bale.id, { closedDate: null });
+        }
+      }
+
       fetchData();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -127,6 +142,93 @@ const Bales = () => {
     return null;
   };
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New field, default to ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedBales = () => {
+    const sorted = [...bales].sort((a, b) => {
+      let aVal, bVal;
+
+      switch (sortField) {
+        case 'id':
+          aVal = a.id;
+          bVal = b.id;
+          break;
+        case 'openedDate':
+          aVal = a.openedDate ? new Date(a.openedDate).getTime() : 0;
+          bVal = b.openedDate ? new Date(b.openedDate).getTime() : 0;
+          break;
+        case 'closedDate':
+          aVal = a.closedDate ? new Date(a.closedDate).getTime() : 0;
+          bVal = b.closedDate ? new Date(b.closedDate).getTime() : 0;
+          break;
+        case 'warmDate':
+          aVal = a.warmDate ? new Date(a.warmDate).getTime() : 0;
+          bVal = b.warmDate ? new Date(b.warmDate).getTime() : 0;
+          break;
+        case 'warmTemperature':
+          aVal = a.warmTemperature || 0;
+          bVal = b.warmTemperature || 0;
+          break;
+        case 'timeElapsed':
+          aVal = a.openedDate ? daysBetween(a.openedDate) : 0;
+          bVal = b.openedDate ? daysBetween(b.openedDate) : 0;
+          break;
+        case 'supplier':
+          aVal = a.delivery?.supplier || '';
+          bVal = b.delivery?.supplier || '';
+          break;
+        case 'status':
+          // Sort by open status, then closed, then reimbursed
+          aVal = (a.isOpen ? 4 : 0) + (a.isClosed ? 3 : 0) + (a.isReimbursed ? 2 : 0) + (a.isBad ? 1 : 0);
+          bVal = (b.isOpen ? 4 : 0) + (b.isClosed ? 3 : 0) + (b.isReimbursed ? 2 : 0) + (b.isBad ? 1 : 0);
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aVal === 'string') {
+        return sortDirection === 'asc'
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+    return sorted;
+  };
+
+  const SortableHeader = ({ field, children }) => {
+    const isActive = sortField === field;
+    return (
+      <th
+        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+        onClick={() => handleSort(field)}
+        title="Click to sort"
+      >
+        <div className="flex items-center gap-1">
+          {children}
+          <span className="text-gray-400">
+            {isActive ? (
+              sortDirection === 'asc' ? '▲' : '▼'
+            ) : (
+              '⇅'
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
@@ -162,19 +264,19 @@ const Bales = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Opened Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Closed Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Warm Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Temp (°C)</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time Elapsed</th>
+              <SortableHeader field="id">ID</SortableHeader>
+              <SortableHeader field="status">Status</SortableHeader>
+              <SortableHeader field="openedDate">Opened Date</SortableHeader>
+              <SortableHeader field="closedDate">Closed Date</SortableHeader>
+              <SortableHeader field="warmDate">Warm Date</SortableHeader>
+              <SortableHeader field="warmTemperature">Temp (°C)</SortableHeader>
+              <SortableHeader field="timeElapsed">Time Elapsed</SortableHeader>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prognos</th>
-              {!deliveryId && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>}
+              {!deliveryId && <SortableHeader field="supplier">Supplier</SortableHeader>}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {bales.map((bale) => {
+            {getSortedBales().map((bale) => {
               const warning = getWarningStatus(bale);
               const rowClass = warning === 'danger'
                 ? 'bg-red-50'
@@ -298,7 +400,7 @@ const Bales = () => {
 
       {/* Mobile/Tablet Cards */}
       <div className="lg:hidden space-y-4">
-        {bales.map((bale) => {
+        {getSortedBales().map((bale) => {
           const warning = getWarningStatus(bale);
           const cardClass = warning === 'danger'
             ? 'border-2 border-red-500'

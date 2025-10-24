@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
@@ -71,6 +71,14 @@ const Login = () => {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        <div className="mt-4 text-center">
+          <Link
+            to="/forgot-password"
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <div className="mt-4 text-center text-sm text-gray-600">
           <p>Default credentials:</p>
           <p className="font-mono">admin / admin123</p>

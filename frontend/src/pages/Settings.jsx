@@ -11,8 +11,8 @@ const Settings = () => {
     email_smtp_port: '587',
     email_smtp_user: '',
     email_smtp_password: '',
-    email_notification_to: '',
-    email_enabled: 'false'
+    email_to: '',
+    email_notifications_enabled: 'false'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -138,8 +138,8 @@ const Settings = () => {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={settings.email_enabled === 'true'}
-                onChange={(e) => setSettings({ ...settings, email_enabled: e.target.checked.toString() })}
+                checked={settings.email_notifications_enabled === 'true'}
+                onChange={(e) => setSettings({ ...settings, email_notifications_enabled: e.target.checked.toString() })}
                 className="mr-2"
               />
               <span className="text-sm font-medium text-gray-700">Enable Email Notifications</span>
@@ -202,8 +202,8 @@ const Settings = () => {
               </label>
               <input
                 type="email"
-                value={settings.email_notification_to}
-                onChange={(e) => setSettings({ ...settings, email_notification_to: e.target.value })}
+                value={settings.email_to}
+                onChange={(e) => setSettings({ ...settings, email_to: e.target.value })}
                 className="border border-gray-300 rounded px-3 py-2 w-full"
                 placeholder="alerts@yourdomain.com"
               />

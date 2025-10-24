@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Deliveries from './pages/Deliveries';
 import Bales from './pages/Bales';
 import UserManagement from './pages/UserManagement';
@@ -36,6 +38,14 @@ const AppContent = () => {
         <Route
           path="/login"
           element={user ? <Navigate to="/deliveries" /> : <Login />}
+        />
+        <Route
+          path="/forgot-password"
+          element={user ? <Navigate to="/deliveries" /> : <ForgotPassword />}
+        />
+        <Route
+          path="/reset-password/:token"
+          element={user ? <Navigate to="/deliveries" /> : <ResetPassword />}
         />
         <Route
           path="/"
