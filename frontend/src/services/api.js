@@ -69,7 +69,13 @@ export const balesAPI = {
   predictWarmDate: (id) => api.get(`/bales/${id}/predict-warm`),
   updateAllPredictions: () => api.post('/bales/update-all-predictions'),
   getSettings: () => api.get('/bales/settings'),
-  updateSettings: (settings) => api.put('/bales/settings', settings)
+  updateSettings: (settings) => api.put('/bales/settings', settings),
+  uploadImage: (id, formData) => api.post(`/bales/${id}/upload-image`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+  deleteImage: (id) => api.delete(`/bales/${id}/image`)
 };
 
 export default api;

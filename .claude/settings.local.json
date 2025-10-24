@@ -22,7 +22,8 @@
       "Bash(/dev/null)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nAdd auto-commit to deploy script and fix status toggle behavior\n\nChanges:\n- Deploy script now automatically commits and pushes changes to git before deploying\n- Fixed status toggle: when closing a bale, keep the openedDate for tracking\n- Updated .htaccess to include Authorization header forwarding rules\n\n🤖 Generated with Claude Code\nhttps://claude.com/claude-code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm run migrate:*)"
     ],
     "deny": [],
     "ask": []

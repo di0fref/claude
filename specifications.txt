@@ -35,10 +35,13 @@
 	33. Make the smhi location configurable in the the ui
 	34. Make warm prediction run periodically to update the warm prediction
 	35. I want an email to be sent to all users when a bale has been open for too long, eg. winter, 6 days, summer 4 days, should be confugurable in ui in the us
-	36. I need amil address on users
+	36. I need emil address on users/and when cwhat areating new users as well
 	37. Forgot password functionality
 	38. I need the smtp server to be configurable in settings
 	39. When clicking open set open date, when clicking closed clear open status and set closed date
 	40. Open and closed status should toggle each other
+	41. I need to be able to upload an image to a bale, and be ale to delete it as well
+	42. I need to be able to upload an invoice in pdf format to a delivery and delete it as well
+
 
 so

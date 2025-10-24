@@ -1,5 +1,7 @@
 const { Bale, Delivery, Setting } = require('../models');
 const smhiService = require('../services/smhiService');
+const path = require('path');
+const fs = require('fs');
 
 // Helper function to get today's date without time (YYYY-MM-DD)
 const getTodayDate = () => {
@@ -326,6 +328,79 @@ exports.updateAllPredictions = async (req, res) => {
     });
   } catch (error) {
     console.error('Update all predictions error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Upload image for bale
+exports.uploadImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const bale = await Bale.findByPk(id);
+    if (!bale) {
+      // Delete uploaded file if bale doesn't exist
+      fs.unlinkSync(req.file.path);
+      return res.status(404).json({ error: 'Bale not found' });
+    }
+
+    // Delete old image if exists
+    if (bale.imagePath) {
+      const oldImagePath = path.join(__dirname, '..', 'uploads', path.basename(bale.imagePath));
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // Save new image path (relative path for serving)
+    bale.imagePath = `/uploads/${req.file.filename}`;
+    await bale.save();
+
+    res.json({
+      message: 'Image uploaded successfully',
+      imagePath: bale.imagePath
+    });
+  } catch (error) {
+    console.error('Upload image error:', error);
+    // Clean up uploaded file on error
+    if (req.file && req.file.path) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Delete image for bale
+exports.deleteImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const bale = await Bale.findByPk(id);
+    if (!bale) {
+      return res.status(404).json({ error: 'Bale not found' });
+    }
+
+    if (!bale.imagePath) {
+      return res.status(404).json({ error: 'No image to delete' });
+    }
+
+    // Delete file from filesystem
+    const imagePath = path.join(__dirname, '..', 'uploads', path.basename(bale.imagePath));
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+
+    // Clear image path in database
+    bale.imagePath = null;
+    await bale.save();
+
+    res.json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Delete image error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

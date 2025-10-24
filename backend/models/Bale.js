@@ -62,6 +62,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       allowNull: true,
       field: 'predicted_warm_date'
+    },
+    imagePath: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'image_path'
     }
   }, {
     tableName: 'bales',

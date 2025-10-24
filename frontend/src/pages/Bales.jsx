@@ -115,6 +115,51 @@ const Bales = () => {
     }
   };
 
+  const handleImageUpload = async (baleId, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      await balesAPI.uploadImage(baleId, formData);
+      fetchData();
+      alert('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert(error.response?.data?.error || 'Failed to upload image');
+    }
+  };
+
+  const handleImageDelete = async (baleId) => {
+    if (!window.confirm('Are you sure you want to delete this image?')) {
+      return;
+    }
+
+    try {
+      await balesAPI.deleteImage(baleId);
+      fetchData();
+      alert('Image deleted successfully');
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert(error.response?.data?.error || 'Failed to delete image');
+    }
+  };
+
   const handlePredictWarm = async (baleId) => {
     try {
       await balesAPI.predictWarmDate(baleId);
@@ -286,6 +331,7 @@ const Bales = () => {
               <SortableHeader field="warmTemperature">Temp (°C)</SortableHeader>
               <SortableHeader field="timeElapsed">Time Elapsed</SortableHeader>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prognos</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
               {!deliveryId && <SortableHeader field="supplier">Supplier</SortableHeader>}
             </tr>
           </thead>
@@ -398,6 +444,36 @@ const Bales = () => {
                       <span className="text-gray-500 text-xs">Redan varm</span>
                     ) : (
                       '-'
+                    )}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">
+                    {bale.imagePath ? (
+                      <div className="flex items-center gap-2">
+                        <a href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`}
+                            alt="Bale"
+                            className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75"
+                          />
+                        </a>
+                        <button
+                          onClick={() => handleImageDelete(bale.id)}
+                          className="text-red-600 hover:text-red-800 text-xs"
+                          title="Delete image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer text-blue-600 hover:text-blue-800 text-xs">
+                        Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(bale.id, e)}
+                        />
+                      </label>
                     )}
                   </td>
                   {!deliveryId && (
@@ -529,6 +605,36 @@ const Bales = () => {
                     )}
                   </div>
                 )}
+                <div>
+                  <span className="font-semibold text-gray-700">Image:</span>{' '}
+                  {bale.imagePath ? (
+                    <div className="mt-2 flex items-center gap-3">
+                      <a href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`}
+                          alt="Bale"
+                          className="w-24 h-24 object-cover rounded cursor-pointer hover:opacity-75"
+                        />
+                      </a>
+                      <button
+                        onClick={() => handleImageDelete(bale.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="mt-2 inline-block cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                      Upload Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(bale.id, e)}
+                      />
+                    </label>
+                  )}
+                </div>
                 {!deliveryId && bale.delivery && (
                   <div>
                     <span className="font-semibold text-gray-700">Supplier:</span> {bale.delivery.supplier}
