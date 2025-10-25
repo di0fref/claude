@@ -314,13 +314,6 @@ const Bales = () => {
             <p className="text-gray-600">Delivery Date: {formatDate(delivery.deliveryDate)}</p>
           )}
         </div>
-        <button
-          onClick={handleUpdateAllPredictions}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-          title="Uppdatera prognoser för alla öppna balar från SMHI"
-        >
-          Uppdatera alla prognoser
-        </button>
       </div>
 
       {/* Desktop Table */}
@@ -335,7 +328,6 @@ const Bales = () => {
               <SortableHeader field="warmDate">Warm Date</SortableHeader>
               <SortableHeader field="warmTemperature">Temp (°C)</SortableHeader>
               <SortableHeader field="timeElapsed">Time Elapsed</SortableHeader>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prognos</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
               {!deliveryId && <SortableHeader field="supplier">Supplier</SortableHeader>}
             </tr>
@@ -421,46 +413,15 @@ const Bales = () => {
                     )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    {bale.isOpen && bale.openedDate && !bale.warmDate ? (
-                      <>
-                        {bale.predictedWarmDate ? (
-                          <div className="text-xs">
-                            <span className="text-orange-600 font-semibold">
-                              ~{formatDate(bale.predictedWarmDate)}
-                            </span>
-                            <button
-                              onClick={() => handlePredictWarm(bale.id)}
-                              className="ml-2 text-blue-600 hover:text-blue-800"
-                              title="Uppdatera prognos"
-                            >
-                              ↻
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handlePredictWarm(bale.id)}
-                            className="text-blue-600 hover:text-blue-800 text-xs"
-                          >
-                            Hämta prognos
-                          </button>
-                        )}
-                      </>
-                    ) : bale.warmDate ? (
-                      <span className="text-gray-500 text-xs">Redan varm</span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
                     {bale.imagePath ? (
                       <div className="flex items-center gap-2">
                         <a
-                          href={bale.imagePath}
+                          href={process.env.NODE_ENV === 'development' ? `http://localhost:5000${bale.imagePath}` : bale.imagePath}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 underline"
                         >
-                          View Image
+                          View
                         </a>
                         <button
                           onClick={() => handleImageDelete(bale.id)}
@@ -483,7 +444,7 @@ const Bales = () => {
                           htmlFor={`image-upload-${bale.id}`}
                           className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded cursor-pointer"
                         >
-                          Upload Image
+                          Upload
                         </label>
                       </div>
                     )}
@@ -591,38 +552,12 @@ const Bales = () => {
                     </span>
                   </div>
                 )}
-                {bale.isOpen && bale.openedDate && !bale.warmDate && (
-                  <div>
-                    <span className="font-semibold text-gray-700">Prognos:</span>{' '}
-                    {bale.predictedWarmDate ? (
-                      <>
-                        <span className="text-orange-600 font-semibold">
-                          ~{formatDate(bale.predictedWarmDate)}
-                        </span>
-                        <button
-                          onClick={() => handlePredictWarm(bale.id)}
-                          className="ml-2 text-blue-600 hover:text-blue-800"
-                          title="Uppdatera prognos"
-                        >
-                          ↻
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handlePredictWarm(bale.id)}
-                        className="text-blue-600 hover:text-blue-800 text-xs"
-                      >
-                        Hämta prognos
-                      </button>
-                    )}
-                  </div>
-                )}
                 <div>
                   <span className="font-semibold text-gray-700">Image:</span>{' '}
                   {bale.imagePath ? (
                     <div className="flex items-center gap-2">
                       <a
-                        href={bale.imagePath}
+                        href={process.env.NODE_ENV === 'development' ? `http://localhost:5000${bale.imagePath}` : bale.imagePath}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 underline"
