@@ -73,11 +73,12 @@ rsync -avz --delete \
 echo "✅ Frontend uploaded"
 echo ""
 
-# Step 4: Upload .htaccess and API proxy
-echo "📤 Uploading .htaccess and API proxy..."
+# Step 4: Upload .htaccess and proxy files
+echo "📤 Uploading .htaccess and proxy files..."
 scp "$LOCAL_PATH/.htaccess" "$SERVER:$REMOTE_PATH/"
 scp "$LOCAL_PATH/api-proxy.php" "$SERVER:$REMOTE_PATH/"
-echo "✅ .htaccess and API proxy uploaded"
+scp "$LOCAL_PATH/uploads-proxy.php" "$SERVER:$REMOTE_PATH/"
+echo "✅ .htaccess and proxy files uploaded"
 echo ""
 
 # Step 5: Upload Scripts

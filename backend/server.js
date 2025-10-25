@@ -28,6 +28,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Sync database and start server
+
 const startServer = async () => {
   try {
     await sequelize.authenticate();
