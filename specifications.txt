@@ -32,10 +32,10 @@
 	30. Use sequalize.js
 	31. Integrate to smhi to get predictions when a bale is going to be warm based on previous data and temparature
 	32. When setting a bale warm record the temperature and date
-	33. Make the smhi location configurable in the the ui
+	33. Make the smhi location configurable in the ui
 	34. Make warm prediction run periodically to update the warm prediction
 	35. I want an email to be sent to all users when a bale has been open for too long, eg. winter, 6 days, summer 4 days, should be confugurable in ui in the us
-	36. I need emil address on users/and when cwhat areating new users as well
+	36. I need emil address on users/and when creating new users as well
 	37. Forgot password functionality
 	38. I need the smtp server to be configurable in settings
 	39. When clicking open set open date, when clicking closed clear open status and set closed date

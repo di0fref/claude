@@ -4,6 +4,8 @@ import { balesAPI, deliveriesAPI } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import InlineEdit from '../components/InlineEdit';
 import { formatDate, formatDateForInput, daysBetween, timeElapsed, isWinter } from '../utils/dateUtils';
+import {FaBacon} from "react-icons/fa6";
+import {FaTrash} from "react-icons/fa";
 
 const Bales = () => {
   const { deliveryId } = useParams();
@@ -350,7 +352,7 @@ const Bales = () => {
                     {bale.id}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-0.5">
                       <StatusBadge
                         status="open"
                         active={bale.isOpen}
@@ -450,18 +452,19 @@ const Bales = () => {
                     {bale.imagePath ? (
                       <div className="flex items-center gap-2">
                         <a href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`}
-                            alt="Bale"
-                            className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75"
-                          />
+                          {/*<img*/}
+                          {/*  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`}*/}
+                          {/*  alt="Bale"*/}
+                          {/*  className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75"*/}
+                          {/*/>*/}
+                          <span className={"cursor-pointer text-blue-600 hover:text-blue-800"}>View Image</span>
                         </a>
                         <button
                           onClick={() => handleImageDelete(bale.id)}
-                          className="text-red-600 hover:text-red-800 text-xs"
+                          className="text-gray-4kepp on 00 hover:text-red-800 text-xs"
                           title="Delete image"
                         >
-                          ✕
+                          <FaTrash/>
                         </button>
                       </div>
                     ) : (
