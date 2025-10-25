@@ -4,6 +4,10 @@ RewriteBase /
 # Pass Authorization header to PHP
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
+# Uploads proxy - serve uploaded files from backend
+RewriteCond %{REQUEST_URI} ^/uploads/
+RewriteRule ^uploads/(.*)$ /uploads-proxy.php [L,QSA]
+
 # API proxy - MUST come first
 RewriteCond %{REQUEST_URI} ^/api/
 RewriteRule ^api/(.*)$ /api-proxy.php [L,QSA,E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

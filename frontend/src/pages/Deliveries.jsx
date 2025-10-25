@@ -219,7 +219,7 @@ const Deliveries = () => {
                   {delivery.invoicePath ? (
                     <div className="flex items-center gap-2">
                       <a
-                        href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${delivery.invoicePath}`}
+                        href={delivery.invoicePath}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 underline"
@@ -263,7 +263,7 @@ const Deliveries = () => {
                       type="number"
                       placeholder="-"
                     />
-                    <span className="text-xs text-gray-400 ml-1">kg</span>
+                    {/*<span className="text-xs text-gray-400 ml-1">kg</span>*/}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" onClick={(e) => e.stopPropagation()}>
@@ -274,7 +274,7 @@ const Deliveries = () => {
                       type="number"
                       placeholder="-"
                     />
-                    <span className="text-xs text-gray-400 ml-1">kr</span>
+                    {/*<span className="text-xs text-gray-400 ml-1">kr</span>*/}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
@@ -331,7 +331,7 @@ const Deliveries = () => {
                   {delivery.invoicePath ? (
                     <>
                       <a
-                        href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${delivery.invoicePath}`}
+                        href={delivery.invoicePath}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 underline"

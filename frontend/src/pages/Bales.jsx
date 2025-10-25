@@ -451,9 +451,9 @@ const Bales = () => {
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     {bale.imagePath ? (
                       <div className="flex items-center gap-2">
-                        <a href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`} target="_blank" rel="noopener noreferrer">
+                        <a href={bale.imagePath} target="_blank" rel="noopener noreferrer">
                           {/*<img*/}
-                          {/*  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`}*/}
+                          {/*  src={bale.imagePath}*/}
                           {/*  alt="Bale"*/}
                           {/*  className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75"*/}
                           {/*/>*/}
@@ -612,9 +612,9 @@ const Bales = () => {
                   <span className="font-semibold text-gray-700">Image:</span>{' '}
                   {bale.imagePath ? (
                     <div className="mt-2 flex items-center gap-3">
-                      <a href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`} target="_blank" rel="noopener noreferrer">
+                      <a href={bale.imagePath} target="_blank" rel="noopener noreferrer">
                         <img
-                          src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${bale.imagePath}`}
+                          src={bale.imagePath}
                           alt="Bale"
                           className="w-24 h-24 object-cover rounded cursor-pointer hover:opacity-75"
                         />
