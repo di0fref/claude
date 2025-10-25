@@ -55,6 +55,7 @@ rsync -avz --delete \
   --exclude '.env' \
   --exclude 'database.sqlite' \
   --exclude 'config/config.json' \
+  --exclude 'uploads' \
   "$LOCAL_PATH/backend/" \
   "$SERVER:$REMOTE_PATH/backend/"
 echo "✅ Backend uploaded"
