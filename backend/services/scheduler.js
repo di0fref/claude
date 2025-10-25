@@ -18,7 +18,11 @@ const logCron = (message) => {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
   console.log(message); // Still log to console
-  fs.appendFileSync(cronLogFile, logMessage);
+  try {
+    fs.appendFileSync(cronLogFile, logMessage);
+  } catch (error) {
+    console.error('Failed to write to cron log:', error.message);
+  }
 };
 
 // Run every day at 6 AM to update warm predictions
