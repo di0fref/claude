@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deliveriesAPI } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
@@ -23,6 +23,7 @@ const Deliveries = () => {
     totalKg: ''
   });
   const navigate = useNavigate();
+  const fileInputRefs = useRef({});
 
   useEffect(() => {
     fetchDeliveries();
@@ -89,6 +90,50 @@ const Deliveries = () => {
         fetchDeliveries();
       } catch (error) {
         console.error('Error deleting delivery:', error);
+      }
+    }
+  };
+
+  const handleInvoiceUpload = async (deliveryId, event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      alert('Only PDF files are allowed');
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('invoice', file);
+      await deliveriesAPI.uploadInvoice(deliveryId, formData);
+      fetchDeliveries();
+      // Reset the file input
+      if (fileInputRefs.current[deliveryId]) {
+        fileInputRefs.current[deliveryId].value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading invoice:', error);
+      alert('Failed to upload invoice');
+    }
+  };
+
+  const handleInvoiceDelete = async (deliveryId) => {
+    if (window.confirm('Are you sure you want to delete this invoice?')) {
+      try {
+        await deliveriesAPI.deleteInvoice(deliveryId);
+        fetchDeliveries();
+      } catch (error) {
+        console.error('Error deleting invoice:', error);
+        alert('Failed to delete invoice');
       }
     }
   };
@@ -170,8 +215,42 @@ const Deliveries = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(delivery.deliveryDate)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {delivery.invoiceNumber || '-'}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" onClick={(e) => e.stopPropagation()}>
+                  {delivery.invoicePath ? (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${delivery.invoicePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View PDF
+                      </a>
+                      <button
+                        onClick={() => handleInvoiceDelete(delivery.id)}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        ref={(el) => (fileInputRefs.current[delivery.id] = el)}
+                        onChange={(e) => handleInvoiceUpload(delivery.id, e)}
+                        className="hidden"
+                        id={`invoice-upload-${delivery.id}`}
+                      />
+                      <label
+                        htmlFor={`invoice-upload-${delivery.id}`}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded cursor-pointer"
+                      >
+                        Upload PDF
+                      </label>
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {delivery.stats.total} / {delivery.stats.left} / {delivery.stats.bad}
@@ -246,7 +325,46 @@ const Deliveries = () => {
             </div>
             <div className="space-y-1 text-sm text-gray-600">
               <p><span className="font-semibold">Date:</span> {formatDate(delivery.deliveryDate)}</p>
-              <p><span className="font-semibold">Invoice:</span> {delivery.invoiceNumber || '-'}</p>
+              <div onClick={(e) => e.stopPropagation()}>
+                <p className="flex items-center gap-2">
+                  <span className="font-semibold">Invoice:</span>
+                  {delivery.invoicePath ? (
+                    <>
+                      <a
+                        href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${delivery.invoicePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View PDF
+                      </a>
+                      <button
+                        onClick={() => handleInvoiceDelete(delivery.id)}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        ref={(el) => (fileInputRefs.current[delivery.id] = el)}
+                        onChange={(e) => handleInvoiceUpload(delivery.id, e)}
+                        className="hidden"
+                        id={`invoice-upload-mobile-${delivery.id}`}
+                      />
+                      <label
+                        htmlFor={`invoice-upload-mobile-${delivery.id}`}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded cursor-pointer"
+                      >
+                        Upload PDF
+                      </label>
+                    </>
+                  )}
+                </p>
+              </div>
               <p><span className="font-semibold">Bales:</span> {delivery.stats.total} total, {delivery.stats.left} left, {delivery.stats.bad} bad</p>
               <div onClick={(e) => e.stopPropagation()}>
                 <p className="flex items-center gap-2">

@@ -35,14 +35,6 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
     // Forward request method
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
 
-    // Forward request body for POST, PUT, PATCH
-    if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'PATCH', 'DELETE'])) {
-        $body = file_get_contents('php://input');
-        if ($body) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-        }
-    }
-
     // Forward headers (excluding host)
     $headers = [];
 
@@ -78,6 +70,44 @@ if (preg_match('#^/api/(.*)$#', $request_uri, $matches)) {
         // Add Authorization if present (sometimes not in HTTP_ prefix)
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
             $headers[] = "Authorization: " . $_SERVER['HTTP_AUTHORIZATION'];
+        }
+    }
+
+    // Handle file uploads differently from regular POST data
+    if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+        // Check if this is a multipart/form-data request (file upload)
+        $content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+        if (strpos($content_type, 'multipart/form-data') !== false && !empty($_FILES)) {
+            // Build multipart form data for file upload
+            $postfields = [];
+
+            // Add regular POST fields
+            foreach ($_POST as $key => $value) {
+                $postfields[$key] = $value;
+            }
+
+            // Add files
+            foreach ($_FILES as $key => $file) {
+                if ($file['error'] === UPLOAD_ERR_OK) {
+                    $postfields[$key] = new CURLFile($file['tmp_name'], $file['type'], $file['name']);
+                    // Log file upload
+                    @file_put_contents($log_file, date('Y-m-d H:i:s') . " - File upload: key=$key, name={$file['name']}, size={$file['size']}, type={$file['type']}\n", FILE_APPEND);
+                } else {
+                    @file_put_contents($log_file, date('Y-m-d H:i:s') . " - File upload error: key=$key, error={$file['error']}\n", FILE_APPEND);
+                }
+            }
+
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
+            // Remove Content-Type and Content-Length from headers - cURL will set them correctly
+            $headers = array_filter($headers, function($header) {
+                return stripos($header, 'Content-Type:') !== 0 && stripos($header, 'Content-Length:') !== 0;
+            });
+        } else {
+            // Regular JSON/form data
+            $body = file_get_contents('php://input');
+            if ($body) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            }
         }
     }
 

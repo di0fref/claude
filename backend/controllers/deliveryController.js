@@ -158,3 +158,83 @@ exports.deleteDelivery = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+// Upload invoice PDF for delivery
+exports.uploadInvoice = async (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const delivery = await Delivery.findByPk(id);
+    if (!delivery) {
+      // Delete uploaded file if delivery doesn't exist
+      fs.unlinkSync(req.file.path);
+      return res.status(404).json({ error: 'Delivery not found' });
+    }
+
+    // Delete old invoice if exists
+    if (delivery.invoicePath) {
+      const oldInvoicePath = path.join(__dirname, '..', 'uploads', path.basename(delivery.invoicePath));
+      if (fs.existsSync(oldInvoicePath)) {
+        fs.unlinkSync(oldInvoicePath);
+      }
+    }
+
+    // Save new invoice path
+    delivery.invoicePath = `/uploads/${req.file.filename}`;
+    await delivery.save();
+
+    res.json({
+      message: 'Invoice uploaded successfully',
+      invoicePath: delivery.invoicePath
+    });
+  } catch (error) {
+    console.error('Upload invoice error:', error);
+    // Clean up uploaded file on error
+    if (req.file && req.file.path) {
+      const fs = require('fs');
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Delete invoice PDF for delivery
+exports.deleteInvoice = async (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+
+  try {
+    const { id } = req.params;
+
+    const delivery = await Delivery.findByPk(id);
+    if (!delivery) {
+      return res.status(404).json({ error: 'Delivery not found' });
+    }
+
+    if (!delivery.invoicePath) {
+      return res.status(404).json({ error: 'No invoice to delete' });
+    }
+
+    // Delete file from filesystem
+    const invoicePath = path.join(__dirname, '..', 'uploads', path.basename(delivery.invoicePath));
+    if (fs.existsSync(invoicePath)) {
+      fs.unlinkSync(invoicePath);
+    }
+
+    // Clear invoice path in database
+    delivery.invoicePath = null;
+    await delivery.save();
+
+    res.json({ message: 'Invoice deleted successfully' });
+  } catch (error) {
+    console.error('Delete invoice error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};

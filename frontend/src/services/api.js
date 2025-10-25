@@ -57,7 +57,13 @@ export const deliveriesAPI = {
   getById: (id) => api.get(`/deliveries/${id}`),
   create: (deliveryData) => api.post('/deliveries', deliveryData),
   update: (id, deliveryData) => api.put(`/deliveries/${id}`, deliveryData),
-  delete: (id) => api.delete(`/deliveries/${id}`)
+  delete: (id) => api.delete(`/deliveries/${id}`),
+  uploadInvoice: (id, formData) => api.post(`/deliveries/${id}/upload-invoice`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+  deleteInvoice: (id) => api.delete(`/deliveries/${id}/invoice`)
 };
 
 // Bales API

@@ -22,6 +22,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       field: 'invoice_number'
     },
+    invoicePath: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'invoice_path'
+    },
     numberOfBales: {
       type: DataTypes.INTEGER,
       allowNull: false,
