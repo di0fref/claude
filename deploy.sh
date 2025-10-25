@@ -113,9 +113,9 @@ fi
 # Make scripts executable
 chmod +x start.sh stop.sh status.sh 2>/dev/null || true
 
-# Start server
+# Start server in production mode
 echo "Starting server..."
-nohup node backend/server.js > logs/output.log 2>&1 &
+NODE_ENV=production nohup node backend/server.js > logs/output.log 2>&1 &
 echo $! > /tmp/baletracker.pid
 echo "Server started with PID $(cat /tmp/baletracker.pid)"
 EOF
