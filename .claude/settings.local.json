@@ -26,7 +26,8 @@
       "Bash(npm run migrate:*)",
       "Read(//Users/fredrik/www/**)",
       "Bash(git commit -m \"$(cat <<''EOF''\nRelease v1.0: Complete bale delivery tracking system\n\nFeatures implemented:\n- Delivery management with supplier tracking and payment status\n- Bale lifecycle tracking (open, closed, bad, reimbursed)\n- Warm date prediction using machine learning\n- Automated notifications for overdue bales\n- Image upload for bales (JPEG, PNG, GIF, WebP up to 5MB)\n- PDF invoice upload for deliveries (up to 10MB)\n- User authentication and management\n- Cost prediction and statistics\n- Password reset functionality via email\n- Mobile-responsive design\n\nTechnical improvements:\n- File upload proxy system for serving images and PDFs\n- Proper URL handling for uploaded files\n- Production deployment configuration\n- Database migrations for all features\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

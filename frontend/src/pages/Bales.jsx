@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { balesAPI, deliveriesAPI } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
@@ -17,6 +17,7 @@ const Bales = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
+  const fileInputRefs = useRef({});
 
   useEffect(() => {
     fetchData();
@@ -140,7 +141,10 @@ const Bales = () => {
 
       await balesAPI.uploadImage(baleId, formData);
       fetchData();
-      alert('Image uploaded successfully');
+      // Reset the file input
+      if (fileInputRefs.current[baleId]) {
+        fileInputRefs.current[baleId].value = '';
+      }
     } catch (error) {
       console.error('Error uploading image:', error);
       alert(error.response?.data?.error || 'Failed to upload image');
@@ -155,7 +159,6 @@ const Bales = () => {
     try {
       await balesAPI.deleteImage(baleId);
       fetchData();
-      alert('Image deleted successfully');
     } catch (error) {
       console.error('Error deleting image:', error);
       alert(error.response?.data?.error || 'Failed to delete image');
@@ -451,32 +454,38 @@ const Bales = () => {
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     {bale.imagePath ? (
                       <div className="flex items-center gap-2">
-                        <a href={bale.imagePath} target="_blank" rel="noopener noreferrer">
-                          {/*<img*/}
-                          {/*  src={bale.imagePath}*/}
-                          {/*  alt="Bale"*/}
-                          {/*  className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75"*/}
-                          {/*/>*/}
-                          <span className={"cursor-pointer text-blue-600 hover:text-blue-800"}>View Image</span>
+                        <a
+                          href={bale.imagePath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          View Image
                         </a>
                         <button
                           onClick={() => handleImageDelete(bale.id)}
-                          className="text-gray-4kepp on 00 hover:text-red-800 text-xs"
-                          title="Delete image"
+                          className="text-red-600 hover:text-red-800 text-xs"
                         >
-                          <FaTrash/>
+                          Delete
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer text-blue-600 hover:text-blue-800 text-xs">
-                        Upload
+                      <div>
                         <input
                           type="file"
                           accept="image/*"
-                          className="hidden"
+                          ref={(el) => (fileInputRefs.current[bale.id] = el)}
                           onChange={(e) => handleImageUpload(bale.id, e)}
+                          className="hidden"
+                          id={`image-upload-${bale.id}`}
                         />
-                      </label>
+                        <label
+                          htmlFor={`image-upload-${bale.id}`}
+                          className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded cursor-pointer"
+                        >
+                          Upload Image
+                        </label>
+                      </div>
                     )}
                   </td>
                   {!deliveryId && (
@@ -611,31 +620,39 @@ const Bales = () => {
                 <div>
                   <span className="font-semibold text-gray-700">Image:</span>{' '}
                   {bale.imagePath ? (
-                    <div className="mt-2 flex items-center gap-3">
-                      <a href={bale.imagePath} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={bale.imagePath}
-                          alt="Bale"
-                          className="w-24 h-24 object-cover rounded cursor-pointer hover:opacity-75"
-                        />
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={bale.imagePath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View Image
                       </a>
                       <button
                         onClick={() => handleImageDelete(bale.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                        className="text-red-600 hover:text-red-800 text-xs"
                       >
                         Delete
                       </button>
                     </div>
                   ) : (
-                    <label className="mt-2 inline-block cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
-                      Upload Image
+                    <div>
                       <input
                         type="file"
                         accept="image/*"
-                        className="hidden"
+                        ref={(el) => (fileInputRefs.current[`mobile-${bale.id}`] = el)}
                         onChange={(e) => handleImageUpload(bale.id, e)}
+                        className="hidden"
+                        id={`image-upload-mobile-${bale.id}`}
                       />
-                    </label>
+                      <label
+                        htmlFor={`image-upload-mobile-${bale.id}`}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded cursor-pointer"
+                      >
+                        Upload Image
+                      </label>
+                    </div>
                   )}
                 </div>
                 {!deliveryId && bale.delivery && (
