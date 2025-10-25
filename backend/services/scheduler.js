@@ -2,11 +2,29 @@ const cron = require('node-cron');
 const { Bale, Setting } = require('../models');
 const smhiService = require('./smhiService');
 const emailService = require('./emailService');
+const fs = require('fs');
+const path = require('path');
+
+// Ensure logs directory exists
+const logsDir = path.join(__dirname, '..', 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+const cronLogFile = path.join(logsDir, 'cron.log');
+
+// Helper function to write to cron log
+const logCron = (message) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}\n`;
+  console.log(message); // Still log to console
+  fs.appendFileSync(cronLogFile, logMessage);
+};
 
 // Run every day at 6 AM to update warm predictions
 const scheduleWarmPredictionUpdates = () => {
   cron.schedule('0 6 * * *', async () => {
-    console.log('Running scheduled warm prediction update...');
+    logCron('Running scheduled warm prediction update...');
 
     try {
       // Get SMHI location from settings
@@ -53,31 +71,32 @@ const scheduleWarmPredictionUpdates = () => {
             updated++;
           }
         } catch (error) {
-          console.error(`Error predicting for bale ${bale.id}:`, error.message);
+          logCron(`Error predicting for bale ${bale.id}: ${error.message}`);
         }
       }
 
-      console.log(`Warm prediction update complete: ${updated}/${openBales.length} bales updated`);
+      logCron(`Warm prediction update complete: ${updated}/${openBales.length} bales updated`);
     } catch (error) {
-      console.error('Error in scheduled warm prediction update:', error);
+      logCron(`Error in scheduled warm prediction update: ${error.message}`);
     }
   });
 
-  console.log('Warm prediction scheduler initialized (runs daily at 6 AM)');
+  logCron('Warm prediction scheduler initialized (runs daily at 6 AM)');
 };
 
 // Run every day at 8 AM to check for overdue bales and send email notifications
 const scheduleOverdueBaleNotifications = () => {
   cron.schedule('0 8 * * *', async () => {
-    console.log('Running scheduled overdue bale check...');
+    logCron('Running scheduled overdue bale check...');
     try {
-      await emailService.checkAndNotifyOverdueBales();
+      const result = await emailService.checkAndNotifyOverdueBales();
+      logCron(`Overdue bale check complete: ${result || 'completed'}`);
     } catch (error) {
-      console.error('Error in scheduled overdue bale notification:', error);
+      logCron(`Error in scheduled overdue bale notification: ${error.message}`);
     }
   });
 
-  console.log('Overdue bale notification scheduler initialized (runs daily at 8 AM)');
+  logCron('Overdue bale notification scheduler initialized (runs daily at 8 AM)');
 };
 
 module.exports = {
