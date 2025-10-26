@@ -579,7 +579,7 @@ const Bales = () => {
                     {bale.imagePath ? (
                       <div className="flex items-center gap-2">
                         <a
-                          href={process.env.NODE_ENV === 'development' ? `http://localhost:5000${bale.imagePath}` : bale.imagePath}
+                          href={`${process.env.NODE_ENV === 'development' ? `http://localhost:5000${bale.imagePath}` : bale.imagePath}?t=${Date.now()}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 underline"
@@ -635,7 +635,7 @@ const Bales = () => {
             : '';
 
           return (
-            <div key={bale.id} className={`bg-white shadow-md rounded-lg p-4 ${cardClass}`}>
+            <div key={`${bale.id}-${bale.imagePath || 'no-image'}`} className={`bg-white shadow-md rounded-lg p-4 ${cardClass}`}>
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-lg font-bold text-gray-800">Bale #{bale.id}</h3>
                 {warning && (
@@ -714,7 +714,7 @@ const Bales = () => {
                   {bale.imagePath ? (
                     <div className="flex items-center gap-2">
                       <a
-                        href={process.env.NODE_ENV === 'development' ? `http://localhost:5000${bale.imagePath}` : bale.imagePath}
+                        href={`${process.env.NODE_ENV === 'development' ? `http://localhost:5000${bale.imagePath}` : bale.imagePath}?t=${Date.now()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 underline"
