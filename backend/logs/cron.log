@@ -28,3 +28,11 @@
 [2025-10-26T06:29:22.727Z] Overdue bale notification scheduler initialized (runs daily at 8 AM)
 [2025-10-26T06:29:29.832Z] Warm prediction scheduler initialized (runs daily at 6 AM)
 [2025-10-26T06:29:29.835Z] Overdue bale notification scheduler initialized (runs daily at 8 AM)
+[2025-10-26T06:41:53.611Z] Warm prediction scheduler initialized (runs daily at 6 AM)
+[2025-10-26T06:41:53.614Z] Overdue bale notification scheduler initialized (runs daily at 8 AM)
+[2025-10-26T06:42:01.116Z] Warm prediction scheduler initialized (runs daily at 6 AM)
+[2025-10-26T06:42:01.120Z] Overdue bale notification scheduler initialized (runs daily at 8 AM)
+[2025-10-26T07:00:00.010Z] Running scheduled overdue bale check...
+[2025-10-26T07:00:00.019Z] Overdue bale check complete: completed
+[2025-10-26T08:33:45.284Z] Warm prediction scheduler initialized (runs daily at 6 AM)
+[2025-10-26T08:33:45.287Z] Overdue bale notification scheduler initialized (runs daily at 8 AM)

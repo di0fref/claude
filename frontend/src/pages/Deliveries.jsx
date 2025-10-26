@@ -132,24 +132,24 @@ const Deliveries = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Deliveries</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowReport(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-sm sm:text-base"
           >
             Rapport
           </button>
           <button
             onClick={() => setShowCostPrediction(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm sm:text-base"
           >
             Cost Prediction
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm sm:text-base"
           >
             + Add Delivery
           </button>
