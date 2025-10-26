@@ -388,15 +388,16 @@ const Bales = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Supplier</label>
-                <p className="font-semibold text-gray-900">{delivery.supplier}</p>
+                <InlineEdit
+                  value={delivery.supplier || ''}
+                  onSave={(value) => handleUpdateDelivery('supplier', value)}
+                  type="text"
+                  placeholder="Set supplier"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Delivery Date</label>
                 <p className="text-gray-900">{formatDate(delivery.deliveryDate)}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Invoice #</label>
-                <p className="text-gray-900">{delivery.invoiceNumber || '-'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Invoice PDF</label>
