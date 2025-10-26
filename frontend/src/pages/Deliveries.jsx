@@ -92,10 +92,11 @@ const Deliveries = () => {
       return;
     }
 
-    // Validate file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    // Validate file size (8MB limit)
+    const maxSize = 8 * 1024 * 1024; // 8MB in bytes
     if (file.size > maxSize) {
-      alert('File size must be less than 10MB');
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      alert(`File size (${fileSizeMB} MB) exceeds the maximum allowed size of 8 MB`);
       return;
     }
 

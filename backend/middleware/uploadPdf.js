@@ -38,7 +38,7 @@ const uploadPdf = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit for PDFs
+    fileSize: 8 * 1024 * 1024 // 8MB limit for PDFs
   }
 });
 
