@@ -42,7 +42,8 @@
 	40. Open and closed status should toggle each other
 	41. I need to be able to upload an image to a bale, and be ale to delete it as well
 	42. I need to be able to upload an invoice in pdf format to a delivery and delete it as well
-	43. Show the deilery on top of the bales view and remove the 
+	43. Show the delivery on top of the bales view and make same fields editable as on the delivery table
+	44. Make the bales view open a new popup with the bale data where data can be changes and set an remove the inline editing in bales table
 
 
 so

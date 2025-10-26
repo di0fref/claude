@@ -44,7 +44,8 @@ exports.getDeliveryById = async (req, res) => {
     const delivery = await Delivery.findByPk(id, {
       include: [{
         model: Bale,
-        as: 'bales'
+        as: 'bales',
+        attributes: ['id', 'isOpen', 'isClosed', 'isBad', 'isReimbursed']
       }]
     });
 
@@ -52,7 +53,23 @@ exports.getDeliveryById = async (req, res) => {
       return res.status(404).json({ error: 'Delivery not found' });
     }
 
-    res.json(delivery);
+    // Calculate stats
+    const bales = delivery.bales || [];
+    const totalBales = bales.length;
+    const badBales = bales.filter(b => b.isBad).length;
+    const closedBales = bales.filter(b => b.isClosed).length;
+    const leftBales = totalBales - closedBales - badBales;
+
+    const deliveryWithStats = {
+      ...delivery.toJSON(),
+      stats: {
+        total: totalBales,
+        left: leftBales,
+        bad: badBales
+      }
+    };
+
+    res.json(deliveryWithStats);
   } catch (error) {
     console.error('Get delivery error:', error);
     res.status(500).json({ error: 'Server error' });

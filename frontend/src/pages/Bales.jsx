@@ -18,6 +18,7 @@ const Bales = () => {
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
   const fileInputRefs = useRef({});
+  const invoiceInputRef = useRef(null);
 
   useEffect(() => {
     fetchData();
@@ -238,10 +239,6 @@ const Bales = () => {
           aVal = a.warmDate ? new Date(a.warmDate).getTime() : 0;
           bVal = b.warmDate ? new Date(b.warmDate).getTime() : 0;
           break;
-        case 'warmTemperature':
-          aVal = a.warmTemperature || 0;
-          bVal = b.warmTemperature || 0;
-          break;
         case 'timeElapsed':
           aVal = a.openedDate ? daysBetween(a.openedDate) : 0;
           bVal = b.openedDate ? daysBetween(b.openedDate) : 0;
@@ -297,23 +294,192 @@ const Bales = () => {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
+  const handleUpdateDelivery = async (field, value) => {
+    if (!delivery) return;
+
+    try {
+      await deliveriesAPI.update(delivery.id, {
+        [field]: value
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error updating delivery:', error);
+    }
+  };
+
+  const handleTogglePayment = async () => {
+    if (!delivery) return;
+
+    try {
+      await deliveriesAPI.update(delivery.id, {
+        paymentStatus: !delivery.paymentStatus
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    }
+  };
+
+  const handleInvoiceUpload = async (event) => {
+    if (!delivery) return;
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      alert('Only PDF files are allowed');
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('invoice', file);
+      await deliveriesAPI.uploadInvoice(delivery.id, formData);
+      fetchData();
+      // Reset the file input
+      if (invoiceInputRef.current) {
+        invoiceInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading invoice:', error);
+      alert('Failed to upload invoice');
+    }
+  };
+
+  const handleInvoiceDelete = async () => {
+    if (!delivery) return;
+
+    if (window.confirm('Are you sure you want to delete this invoice?')) {
+      try {
+        await deliveriesAPI.deleteInvoice(delivery.id);
+        fetchData();
+      } catch (error) {
+        console.error('Error deleting invoice:', error);
+        alert('Failed to delete invoice');
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <button
-            onClick={() => navigate('/deliveries')}
-            className="text-blue-600 hover:text-blue-800 mb-2"
-          >
-            ← Back to Deliveries
-          </button>
-          <h1 className="text-3xl font-bold text-gray-800">
-            {delivery ? `Bales for ${delivery.supplier}` : 'All Bales'}
-          </h1>
-          {delivery && (
-            <p className="text-gray-600">Delivery Date: {formatDate(delivery.deliveryDate)}</p>
-          )}
-        </div>
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/deliveries')}
+          className="text-blue-600 hover:text-blue-800 mb-4"
+        >
+          ← Back to Deliveries
+        </button>
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+          {delivery ? `Bales for ${delivery.supplier}` : 'All Bales'}
+        </h1>
+
+        {/* Delivery Info Card */}
+        {delivery && (
+          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Delivery Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Supplier</label>
+                <p className="font-semibold text-gray-900">{delivery.supplier}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Delivery Date</label>
+                <p className="text-gray-900">{formatDate(delivery.deliveryDate)}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Invoice #</label>
+                <p className="text-gray-900">{delivery.invoiceNumber || '-'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Invoice PDF</label>
+                {delivery.invoicePath ? (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={process.env.NODE_ENV === 'development' ? `http://localhost:5000${delivery.invoicePath}` : delivery.invoicePath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline text-sm"
+                    >
+                      View PDF
+                    </a>
+                    <button
+                      onClick={handleInvoiceDelete}
+                      className="text-red-600 hover:text-red-800 text-xs"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      ref={invoiceInputRef}
+                      onChange={handleInvoiceUpload}
+                      className="hidden"
+                      id="invoice-upload-detail"
+                    />
+                    <label
+                      htmlFor="invoice-upload-detail"
+                      className="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-3 rounded cursor-pointer inline-block"
+                    >
+                      Upload PDF
+                    </label>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Bales (Total/Left/Bad)</label>
+                <p className="text-gray-900">
+                  {delivery.stats ? `${delivery.stats.total} / ${delivery.stats.left} / ${delivery.stats.bad}` : '-'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Total Kg</label>
+                <InlineEdit
+                  value={delivery.totalKg || ''}
+                  onSave={(value) => handleUpdateDelivery('totalKg', parseFloat(value))}
+                  type="number"
+                  placeholder="Set kg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Price per Kg</label>
+                <InlineEdit
+                  value={delivery.pricePerKg || ''}
+                  onSave={(value) => handleUpdateDelivery('pricePerKg', parseFloat(value))}
+                  type="number"
+                  placeholder="Set price"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Total Cost</label>
+                <p className="font-semibold text-green-600">
+                  {delivery.totalKg && delivery.pricePerKg
+                    ? `${(delivery.totalKg * delivery.pricePerKg).toFixed(0)} kr`
+                    : '-'
+                  }
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Payment Status</label>
+                <StatusBadge
+                  status={delivery.paymentStatus ? 'paid' : 'unpaid'}
+                  active={delivery.paymentStatus}
+                  onClick={handleTogglePayment}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop Table */}
@@ -323,11 +489,10 @@ const Bales = () => {
             <tr>
               <SortableHeader field="id">ID</SortableHeader>
               <SortableHeader field="status">Status</SortableHeader>
-              <SortableHeader field="openedDate">Opened Date</SortableHeader>
-              <SortableHeader field="closedDate">Closed Date</SortableHeader>
-              <SortableHeader field="warmDate">Warm Date</SortableHeader>
-              <SortableHeader field="warmTemperature">Temp (°C)</SortableHeader>
-              <SortableHeader field="timeElapsed">Time Elapsed</SortableHeader>
+              <SortableHeader field="openedDate">Opened</SortableHeader>
+              <SortableHeader field="closedDate">Closed</SortableHeader>
+              <SortableHeader field="warmDate">Warm</SortableHeader>
+              <SortableHeader field="timeElapsed">Days Open</SortableHeader>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
               {!deliveryId && <SortableHeader field="supplier">Supplier</SortableHeader>}
             </tr>
@@ -395,11 +560,6 @@ const Bales = () => {
                         placeholder="Set date"
                       />
                     </div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {bale.warmTemperature ? (
-                      <span className="font-semibold text-orange-600">{bale.warmTemperature.toFixed(1)}°C</span>
-                    ) : '-'}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                     {bale.isOpen && !bale.isClosed && bale.openedDate ? (
@@ -528,7 +688,7 @@ const Bales = () => {
                   />
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Warm Date:</span>{' '}
+                  <span className="font-semibold text-gray-700">Warm:</span>{' '}
                   <span className={bale.warmDate ? 'text-red-600 font-semibold' : ''}>
                     <InlineEdit
                       value={formatDateForInput(bale.warmDate)}
@@ -538,15 +698,9 @@ const Bales = () => {
                     />
                   </span>
                 </div>
-                {bale.warmTemperature && (
-                  <div>
-                    <span className="font-semibold text-gray-700">Temp:</span>{' '}
-                    <span className="font-semibold text-orange-600">{bale.warmTemperature.toFixed(1)}°C</span>
-                  </div>
-                )}
                 {bale.isOpen && !bale.isClosed && bale.openedDate && (
                   <div>
-                    <span className="font-semibold text-gray-700">Time Elapsed:</span>{' '}
+                    <span className="font-semibold text-gray-700">Days Open:</span>{' '}
                     <span className={warning === 'danger' ? 'font-bold text-red-600' : warning === 'warning' ? 'font-bold text-yellow-600' : ''}>
                       {timeElapsed(bale.openedDate)}
                     </span>

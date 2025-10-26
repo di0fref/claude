@@ -4,7 +4,6 @@ import { deliveriesAPI } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import CostPrediction from '../components/CostPrediction';
 import Report from '../components/Report';
-import InlineEdit from '../components/InlineEdit';
 import { formatDate } from '../utils/dateUtils';
 
 const Deliveries = () => {
@@ -69,17 +68,6 @@ const Deliveries = () => {
       fetchDeliveries();
     } catch (error) {
       console.error('Error updating payment status:', error);
-    }
-  };
-
-  const handleUpdateDelivery = async (deliveryId, field, value) => {
-    try {
-      await deliveriesAPI.update(deliveryId, {
-        [field]: value || null
-      });
-      fetchDeliveries();
-    } catch (error) {
-      console.error('Error updating delivery:', error);
     }
   };
 
@@ -186,15 +174,6 @@ const Deliveries = () => {
                 Bales (Total/Left/Bad)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kg
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Price/kg
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Payment
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -254,34 +233,6 @@ const Deliveries = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {delivery.stats.total} / {delivery.stats.left} / {delivery.stats.bad}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center">
-                    <InlineEdit
-                      value={delivery.totalKg || ''}
-                      onSave={(value) => handleUpdateDelivery(delivery.id, 'totalKg', parseFloat(value))}
-                      type="number"
-                      placeholder="-"
-                    />
-                    {/*<span className="text-xs text-gray-400 ml-1">kg</span>*/}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center">
-                    <InlineEdit
-                      value={delivery.pricePerKg || ''}
-                      onSave={(value) => handleUpdateDelivery(delivery.id, 'pricePerKg', parseFloat(value))}
-                      type="number"
-                      placeholder="-"
-                    />
-                    {/*<span className="text-xs text-gray-400 ml-1">kr</span>*/}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                  {delivery.totalKg && delivery.pricePerKg
-                    ? `${(delivery.totalKg * delivery.pricePerKg).toFixed(0)} kr`
-                    : '-'
-                  }
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm" onClick={(e) => e.stopPropagation()}>
                   <StatusBadge
@@ -366,31 +317,6 @@ const Deliveries = () => {
                 </p>
               </div>
               <p><span className="font-semibold">Bales:</span> {delivery.stats.total} total, {delivery.stats.left} left, {delivery.stats.bad} bad</p>
-              <div onClick={(e) => e.stopPropagation()}>
-                <p className="flex items-center gap-2">
-                  <span className="font-semibold">Kg:</span>
-                  <InlineEdit
-                    value={delivery.totalKg || ''}
-                    onSave={(value) => handleUpdateDelivery(delivery.id, 'totalKg', parseFloat(value))}
-                    type="number"
-                    placeholder="Set kg"
-                  />
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="font-semibold">Price/kg:</span>
-                  <InlineEdit
-                    value={delivery.pricePerKg || ''}
-                    onSave={(value) => handleUpdateDelivery(delivery.id, 'pricePerKg', parseFloat(value))}
-                    type="number"
-                    placeholder="Set price"
-                  />
-                </p>
-                {delivery.totalKg && delivery.pricePerKg && (
-                  <p className="text-green-600 font-semibold">
-                    Total: {(delivery.totalKg * delivery.pricePerKg).toFixed(2)} kr
-                  </p>
-                )}
-              </div>
             </div>
             <button
               onClick={(e) => {
